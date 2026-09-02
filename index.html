@@ -51,6 +51,24 @@
 
   .feed{ padding:0 18px; display:flex; flex-direction:column; gap:14px; }
   .card{ border:2px solid var(--ink); border-radius:20px; overflow:hidden; background:var(--paper); position:relative; }
+
+  /* Lignes compactes "Mes objets" */
+  .item-row{ display:flex; align-items:center; gap:12px; padding:10px; border:2px solid var(--ink); border-radius:16px; background:var(--paper); margin-bottom:8px; }
+  .item-row .thumb{ width:58px; height:58px; border-radius:12px; object-fit:cover; flex-shrink:0; cursor:zoom-in; background:#F2ECFF; }
+  .item-row .thumb-empty{ width:58px; height:58px; border-radius:12px; flex-shrink:0; background:#F2ECFF; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .item-row .info{ flex:1; min-width:0; }
+  .item-row .item-name{ font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item-row .item-sub{ font-size:10.5px; color:rgba(43,33,64,0.55); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .status-box{ flex-shrink:0; border:2px solid var(--ink); border-radius:10px; padding:6px 10px; text-align:center; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:10px; line-height:1.3; }
+  .status-box.online{ background:var(--teal); color:#fff; border-color:var(--teal); }
+  .status-box.offline{ background:#EDEAF6; color:rgba(43,33,64,0.5); }
+  .status-box.pending{ background:var(--yellow); color:var(--ink); border-color:var(--yellow); }
+  .item-extra{ padding:0 2px 10px; }
+
+  .img-lightbox{ position:fixed; inset:0; z-index:500; background:rgba(10,8,18,0.92); display:flex; align-items:center; justify-content:center; padding:24px; }
+  .img-lightbox.hidden{ display:none; }
+  .img-lightbox img{ max-width:100%; max-height:100%; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
+  .img-lightbox-close{ position:absolute; top:20px; right:18px; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.4); color:#fff; font-size:16px; cursor:pointer; }
   .card.done{ opacity:0.85; }
   .done-ribbon{ position:absolute; top:42%; left:-12%; width:124%; transform:rotate(-9deg); background:var(--teal); color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; padding:10px 0; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:3; text-align:center; }
   .card img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#F2ECFF; }
@@ -290,6 +308,12 @@
       </div>
       <div id="publishBody"></div>
     </div>
+  </div>
+
+  <!-- Visionneuse photo -->
+  <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImgLightbox()">
+    <button class="img-lightbox-close" onclick="closeImgLightbox()">✕</button>
+    <img id="imgLightboxSrc" src="" alt="">
   </div>
 
   <!-- Ma localisation -->
@@ -1126,6 +1150,13 @@ async function loadMine(){
   renderMine();
 }
 
+function openImgLightbox(url){
+  if(!url) return;
+  document.getElementById('imgLightboxSrc').src = url;
+  document.getElementById('imgLightbox').classList.remove('hidden');
+}
+function closeImgLightbox(){ document.getElementById('imgLightbox').classList.add('hidden'); }
+
 function renderMine(){
   const el = document.getElementById('mineContent');
   if(!mineDataCache){ el.innerHTML = `<div class="empty">Chargement…</div>`; return; }
@@ -1140,6 +1171,7 @@ function renderMine(){
       const res = incomingRes.find(r=>r.item_id===it.id);
       let action = '';
       let statusLabel = it.status==='reserve' ? 'RÉSERVÉ' : 'EN LIGNE';
+      let statusClass = it.status==='reserve' ? 'pending' : 'online';
       let done = false;
       if(res && !res.donor_validated){
         const verified = currentProfile?.address_verified;
@@ -1147,19 +1179,26 @@ function renderMine(){
         action = `<div class="val-card">🔔 Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
       } else if(res && res.donor_validated){
         done = true;
-        statusLabel = 'DONNÉ';
+        statusLabel = 'HORS LIGNE';
+        statusClass = 'offline';
       }
-      return `<div class="card ${done?'done':''}">
-        ${done ? `<div class="done-ribbon">${it.category==='nourriture' ? "Bien joué, tu as aidé quelqu'un" : "Bien joué, tu t'en es débarrassé"}</div>` : ''}
-        ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
-        <div class="card-body">
-        <div class="card-title">${it.name}</div>
-        <div class="card-meta">${statusLabel}</div>
-        ${done
-          ? `<div class="msg ok">✓ Objet remis — retiré des annonces en ligne. Reste visible ici et dans "Mes réservations" côté receveur.</div>`
-          : `<div class="addr-line" style="font-size:11px; margin-top:4px;">📍 ${currentProfile?.address || 'Adresse non renseignée'}${currentProfile?.address_verified ? ' <span style="color:var(--teal-dark); font-weight:700;">✓ vérifiée GPS</span>' : ' <span style="color:#B24C34;">(non vérifiée)</span>'}</div>`}
-        ${action}
-      </div></div>`;
+      const thumb = it.photo_url
+        ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">`
+        : `<div class="thumb-empty">📦</div>`;
+      return `
+        <div class="item-row">
+          ${thumb}
+          <div class="info">
+            <div class="item-name">${it.name}</div>
+            <div class="item-sub">${done ? "✓ Objet remis" : (currentProfile?.address || 'Adresse non renseignée')}</div>
+          </div>
+          <div class="status-box ${statusClass}">${statusLabel}</div>
+        </div>
+        <div class="item-extra">
+          ${done ? `<div class="msg ok">✓ ${it.category==='nourriture' ? "Bien joué, tu as aidé quelqu'un" : "Bien joué, tu t'en es débarrassé"} — visible aussi dans "Mes réservations" côté receveur.</div>` : ''}
+          ${action}
+        </div>
+      `;
     }).join('');
   } else {
     if(myRes.length===0){
@@ -1169,20 +1208,31 @@ function renderMine(){
     el.innerHTML = myRes.map(r => {
       const it = resItemMap[r.item_id];
       if(!it) return '';
-      let addrBlock = `<div class="card-meta">⏳ En attente de validation du donneur</div>`;
+      const statusLabel = r.donor_validated ? 'VALIDÉ' : 'EN ATTENTE';
+      const statusClass = r.donor_validated ? 'online' : 'pending';
+      const thumb = it.photo_url
+        ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">`
+        : `<div class="thumb-empty">📦</div>`;
+      let addrBlock = '';
       if(r.donor_validated){
-        const mapsLink = r.pickup_lat ? `<br><a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700; font-size:11px;">🗺️ Voir sur Google Maps (vérifiée GPS ✓)</a>` : '';
-        addrBlock = `<div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>`;
+        const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Maps</a>` : '';
+        addrBlock = `<div class="item-extra"><div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div></div>`;
       }
-      return `<div class="card">
-        ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
-        <div class="card-body">
-        <div class="card-title">${it.name}</div>
+      return `
+        <div class="item-row">
+          ${thumb}
+          <div class="info">
+            <div class="item-name">${it.name}</div>
+            <div class="item-sub">${r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur'}</div>
+          </div>
+          <div class="status-box ${statusClass}">${statusLabel}</div>
+        </div>
         ${addrBlock}
-      </div></div>`;
+      `;
     }).join('');
   }
 }
+
 
 async function validateReservation(resId, itemId, itemName){
   const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
