@@ -1103,6 +1103,11 @@ let pubPhotoPreviewUrl = null;
 let pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
 
 function openPublish(){
+  if(!currentProfile?.address_verified){
+    alert("Confirme d'abord ton adresse exacte avec ta position GPS avant de publier un objet — c'est indispensable pour que les distances s'affichent correctement.");
+    openLocationSheet();
+    return;
+  }
   pubPhotoFile = null; pubPhotoPreviewUrl = null;
   pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
   document.getElementById('publishOverlay').classList.remove('hidden');
@@ -1151,6 +1156,10 @@ function setDur(h){ pub.duration=h; renderPublish(); }
 async function submitPublish(){
   if(!currentUser) return;
   const msg = document.getElementById('pubMsg');
+  if(!currentProfile?.address_verified){
+    msg.innerHTML = `<div class="msg err">⚠️ Confirme d'abord ton adresse exacte avec ta position GPS (📍 en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
+    return;
+  }
   if(category==='objets' && !pub.subcategory){
     msg.innerHTML = `<div class="msg err">Choisis une catégorie avant de publier.</div>`;
     return;
@@ -1170,8 +1179,8 @@ async function submitPublish(){
     name, description: pub.desc, etat: pub.etat, category,
     subcategory: category==='objets' ? pub.subcategory : null,
     photo_url: photoUrl,
-    city: currentProfile?.address || currentProfile?.city || 'Lyon',
-    lat: userPos?.lat, lng: userPos?.lng,
+    city: currentProfile.address,
+    lat: currentProfile.lat, lng: currentProfile.lng,
     pickup_time: pub.pickup, duration_hours: pub.duration,
     status: 'disponible'
   });
