@@ -1,2 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toc Toc — Version test connectée</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --bg:#FFF6EC; --paper:#FFFFFF; --ink:#3A2E6E; --ink-soft:#2B2140;
+    --coral:#FF5A5F; --coral-dark:#E8434B; --teal:#00BFA6; --teal-dark:#00A891;
+    --yellow:#FFC93C; --purple:#8B5CF6; --line:rgba(58,46,110,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Work Sans',sans-serif; background:var(--bg); color:var(--ink-soft); min-height:100vh; }
+  .app{
+    max-width:460px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding-bottom:80px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(255,90,95,0.12), transparent 40%),
+      radial-gradient(circle at 92% 8%, rgba(139,92,246,0.12), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(0,191,166,0.10), transparent 45%),
+      var(--bg);
+  }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:2px solid var(--ink); }
+  .brand{ display:flex; align-items:center; gap:8px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:20px; color:var(--ink); }
+  .tour-replay-btn{ width:22px; height:22px; border-radius:50%; background:var(--purple); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .brand span{ color:var(--coral); }
+  .knock-logo{ width:28px; height:28px; flex-shrink:0; }
+  .pill{ background:var(--ink); color:#fff; font-family:'Space Mono',monospace; font-size:11px; padding:8px 13px; border-radius:100px; border:2px solid var(--ink); cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
+  .pill:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
+  .pill.connected{ background:var(--teal); border-color:var(--ink); }
 
-<!DOCTYPE html> <html lang="fr"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Toc Toc — Version test connectée</title> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script> <style> @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap'); :root{ --bg:#FFF6EC; --paper:#FFFFFF; --ink:#3A2E6E; --ink-soft:#2B2140; --coral:#FF5A5F; --coral-dark:#E8434B; --teal:#00BFA6; --teal-dark:#00A891; --yellow:#FFC93C; --purple:#8B5CF6; --line:rgba(58,46,110,0.14); } *{box-sizing:border-box;} body{ margin:0; font-family:'Work Sans',sans-serif; background:var(--bg); color:var(--ink-soft); min-height:100vh; } .app{ max-width:460px; margin:0 auto; min-height:100vh; background:var(--paper); display:flex; flex-direction:column; padding-bottom:80px; } .topbar{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:2px solid var(--ink); } .brand{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:20px; color:var(--ink); } .brand span{ color:var(--coral); } .pill{ background:var(--ink); color:#fff; font-family:'Space Mono',monospace; font-size:11px; padding:7px 12px; border-radius:100px; border:none; cursor:pointer; } .pill.connected{ background:var(--teal); } .segmented{ display:flex; gap:6px; padding:10px 18px; background:#F2ECFF; margin:12px 18px; border-radius:100px; border:1.5px solid var(--ink); } .seg-btn{ flex:1; border:none; background:transparent; padding:8px 0; border-radius:100px; font-family:'Baloo 2',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer; } .seg-btn.active{ background:var(--teal); color:#fff; } .status-row{ display:flex; justify-content:space-between; align-items:center; padding:0 18px 10px; font-size:11px; color:rgba(43,33,64,0.55); font-family:'Space Mono',monospace; } .addr-pill{ background:var(--ink); color:#fff; border:none; font-family:'Space Mono',monospace; font-size:11px; padding:7px 11px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; } .publish-btn{ margin:0 18px 14px; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--purple); color:#fff; border:2px solid var(--ink); padding:12px; border-radius:16px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; cursor:pointer; } .feed{ padding:0 18px; display:flex; flex-direction:column; gap:14px; } .card{ border:2px solid var(--ink); border-radius:20px; overflow:hidden; background:var(--paper); } .card img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#F2ECFF; } .card-body{ padding:12px 14px; } .card-title{ font-family:'Baloo 2',sans-serif; font-weight:600; font-size:16px; color:var(--ink); } .card-meta{ font-size:11.5px; color:rgba(43,33,64,0.6); margin-top:3px; } .card-desc{ font-size:12px; margin-top:6px; color:rgba(43,33,64,0.75); } .card-foot{ margin-top:10px; display:flex; gap:8px; } .btn{ border:none; border-radius:10px; padding:10px 14px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer; } .btn-teal{ background:var(--teal); color:#fff; flex:1; } .btn-ghost{ background:#F2ECFF; color:var(--ink); } .empty{ text-align:center; padding:40px 20px; color:rgba(43,33,64,0.5); font-size:13px; } /* Swipe stack */ .stack{ position:relative; height:420px; margin:0 18px 14px; } .swcard{ position:absolute; inset:0; background:var(--paper); border:2px solid var(--ink); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; transition:transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s; cursor:grab; user-select:none; } .swcard:active{ cursor:grabbing; } .swcard.behind{ transform:scale(0.95) translateY(12px); z-index:1; } .swcard.front{ z-index:3; } .swart{ flex:1; position:relative; background:linear-gradient(160deg,#F2ECFF,var(--purple)); } .swart img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; } .swart .noimg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:40px; } .sw-loc{ position:absolute; top:12px; left:12px; background:var(--ink); color:#fff; font-family:'Space Mono',monospace; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; } .sw-free{ position:absolute; top:12px; right:12px; background:var(--yellow); color:var(--ink); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; } .sw-hint{ position:absolute; top:44px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; padding:6px 12px; border:2.5px solid; border-radius:8px; opacity:0; z-index:5; background:#fff; } .sw-hint.like{ right:12px; color:var(--teal-dark); border-color:var(--teal); transform:rotate(8deg); } .sw-hint.pass{ left:12px; color:var(--coral-dark); border-color:var(--coral); transform:rotate(-8deg); } .swinfo{ padding:10px 14px 12px; border-top:2px solid var(--ink); } .swbar{ margin:0 18px 12px; background:var(--ink); border-radius:18px; padding:12px 14px; } .swbar-label{ color:rgba(255,255,255,0.6); font-size:11px; font-family:'Space Mono',monospace; margin-bottom:8px; } .swbar-slider{ display:flex; align-items:center; gap:10px; margin-bottom:4px; } .swbar-slider input[type=range]{ flex:1; } .swbar-val{ color:#fff; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; background:rgba(255,255,255,0.15); padding:5px 9px; border-radius:8px; min-width:44px; text-align:center; } .swbar-ticks{ display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9px; color:rgba(255,255,255,0.4); margin-bottom:10px; } .swbar-actions{ display:flex; gap:8px; } .btn-pass2{ width:44px; background:rgba(255,255,255,0.12); border:none; border-radius:10px; color:var(--coral); font-size:17px; cursor:pointer; } .btn-reserve{ flex:1; background:var(--teal); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; padding:11px 0; border-radius:10px; cursor:pointer; } .auth-wrap{ padding:40px 24px; display:flex; flex-direction:column; gap:10px; } .auth-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:var(--ink); text-align:center; margin-bottom:8px; } input, textarea, select{ width:100%; padding:12px 14px; border-radius:12px; border:2px solid var(--ink); font-family:'Work Sans',sans-serif; font-size:14px; outline:none; } textarea{ resize:none; min-height:70px; } label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; color:var(--ink); margin-top:6px; } .btn-main{ background:var(--purple); color:#fff; border:none; padding:13px; border-radius:14px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; cursor:pointer; margin-top:8px; } .switch-link{ text-align:center; font-size:12.5px; color:var(--purple); cursor:pointer; text-decoration:underline; margin-top:6px; } .msg{ font-size:12.5px; padding:10px; border-radius:10px; margin-top:6px; } .msg.ok{ background:rgba(0,191,166,0.12); color:var(--teal-dark); } .msg.err{ background:rgba(255,90,95,0.12); color:var(--coral-dark); } .overlay{ position:fixed; inset:0; background:rgba(20,14,36,0.6); display:flex; align-items:flex-end; z-index:200; } .overlay.hidden{ display:none; } .sheet{ background:var(--paper); width:100%; max-width:460px; margin:0 auto; border-radius:24px 24px 0 0; padding:20px; max-height:88vh; overflow-y:auto; } .sheet-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; } .sheet-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:17px; color:var(--ink); } .x-btn{ background:#F2ECFF; border:none; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:14px; } .chip-row{ display:flex; gap:8px; flex-wrap:wrap; } .chip{ padding:8px 12px; border-radius:10px; border:2px solid var(--ink); background:var(--paper); font-family:'Baloo 2',sans-serif; font-weight:600; font-size:12px; cursor:pointer; } .chip.active{ background:var(--purple); color:#fff; } .preview-img{ width:100%; border-radius:14px; margin-bottom:10px; max-height:220px; object-fit:cover; } .navrow{ position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:10px 0 18px; max-width:460px; margin:0 auto; z-index:100; box-shadow:0 -2px 12px rgba(0,0,0,0.06); } .navbtn{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; font-family:'Baloo 2',sans-serif; font-size:10px; color:rgba(43,33,64,0.4); cursor:pointer; } .navbtn.active{ color:var(--purple); font-weight:700; } .badge{ position:relative; top:-2px; background:var(--coral); color:#fff; font-size:9px; border-radius:100px; padding:1px 5px; margin-left:3px; } .val-card{ background:#F2ECFF; border:2px dashed var(--purple); border-radius:14px; padding:12px; margin-top:8px; font-size:12px; } .addr-line{ font-family:'Space Mono',monospace; font-size:12px; color:var(--teal-dark); margin-top:6px; } .hidden{ display:none !important; } /* Notifications — style maquette 19 */ .notif-card{ background:var(--paper); border:2px solid var(--ink); border-radius:16px; padding:12px 14px; margin-bottom:10px; } .notif-head{ display:flex; align-items:center; gap:10px; margin-bottom:6px; } .notif-thumb{ width:38px; height:38px; border-radius:10px; flex-shrink:0; background:#F2ECFF; display:flex; align-items:center; justify-content:center; font-size:18px; } .notif-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13.5px; color:var(--ink); } .notif-time{ font-size:10.5px; color:rgba(43,33,64,0.5); font-family:'Space Mono',monospace; margin-top:1px; } .notif-msg{ font-size:11.5px; color:rgba(43,33,64,0.75); line-height:1.4; margin-bottom:8px; } .notif-action{ background:var(--teal); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11.5px; padding:8px 14px; border-radius:9px; cursor:pointer; } /* Profil — style maquette 19 */ .profile-head{ display:flex; align-items:center; gap:12px; padding:8px 4px 14px; } .profile-avatar{ width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--coral), var(--purple)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:20px; flex-shrink:0; border:2px solid var(--ink); } .profile-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink); } .profile-sub{ font-size:11.5px; color:rgba(43,33,64,0.55); margin-top:2px; } .trust-badge{ display:inline-flex; align-items:center; gap:6px; background:var(--yellow); border:1.5px solid var(--ink); color:var(--ink); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; padding:6px 12px; border-radius:100px; margin-bottom:14px; } .section-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin:14px 0 8px; } </style> </head> <body> <div class="app" id="app"> <!-- Auth --> <div id="authView" class="auth-wrap hidden"></div> <!-- Main app --> <div id="mainView" class="hidden"> <div class="topbar"> <div class="brand">Toc<span>Toc</span> <span style="font-size:10px; color:rgba(43,33,64,0.4);">· test</span></div> <button class="pill connected" id="userPill" onclick="switchView('profile')">…</button> </div> <div class="segmented" id="segmentedBar"> <button class="seg-btn active" id="segObjets" onclick="setCategory('objets')">📦 Objets</button> <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')">🍎 Nourriture</button> </div> <div class="status-row" id="statusRow"> <button class="addr-pill" id="addrPill" onclick="openAddressEdit()">📍 <span id="addrPillLabel">localisation…</span> ✎</button> <span id="itemCount"></span> </div> <!-- Découvrir --> <div id="viewDiscover"> <button class="publish-btn" onclick="openPublish()">📷 Publier un objet</button> <div class="stack" id="stack"></div> <div class="swbar"> <div class="swbar-label">Durée pour venir chercher</div> <div class="swbar-slider"> <input type="range" id="durSlider" min="15" max="480" step="15" value="30" oninput="onDurInput(this.value)"> <div class="swbar-val" id="durVal">30 min</div> </div> <div class="swbar-ticks"><span>15 min</span><span>2h</span><span>4h</span><span>8h</span></div> <div class="swbar-actions"> <button class="btn-pass2" onclick="passTop()">✕</button> <button class="btn-reserve" onclick="reserveTop()">Je réserve</button> </div> </div> </div> <!-- Mes objets --> <div id="viewMine" class="hidden" style="padding:0 18px;"></div> <!-- Notifications --> <div id="viewNotifs" class="hidden" style="padding:0 18px;"></div> <!-- Profil --> <div id="viewProfile" class="hidden" style="padding:0 18px;"></div> <div class="navrow"> <button class="navbtn active" id="navDiscover" onclick="switchView('discover')">🏠<span>Découvrir</span></button> <button class="navbtn" id="navMine" onclick="switchView('mine')">📦<span>Mes objets</span></button> <button class="navbtn" id="navNotifs" onclick="switchView('notifs')">🔔<span>Notifs<span class="badge hidden" id="notifBadge">0</span></span></button> <button class="navbtn" id="navProfile" onclick="switchView('profile')">👤<span>Profil</span></button> </div> </div> <!-- Overlay publication --> <div class="overlay hidden" id="publishOverlay"> <div class="sheet"> <div class="sheet-head"> <div class="sheet-title">Nouvel objet</div> <button class="x-btn" onclick="closePublish()">✕</button> </div> <div id="publishBody"></div> </div> </div> <!-- Overlay adresse --> <div class="overlay hidden" id="addrOverlay"> <div class="sheet"> <div class="sheet-head"> <div class="sheet-title">📍 Adresse actuelle</div> <button class="x-btn" onclick="closeAddressEdit()">✕</button> </div> <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;"> Chez toi ou chez quelqu'un d'autre ? Change cette adresse, elle sera utilisée pour tes prochaines annonces. </p> <label>Adresse à afficher</label> <input id="addrInput" placeholder="ex: 5 rue de la Paix, 69001 Lyon"> <button class="btn-main" onclick="saveAddressEdit()">Utiliser cette adresse</button> <div id="addrMsg"></div> </div> </div> </div> <script> // ================= CONFIG SUPABASE ================= const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co"; const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xd21vaW15d3BjZWR6bHF5cWZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjgwNTgsImV4cCI6MjEwMzMwNDA1OH0.EZa53zL3fd2mS6XB0XUw1gcAvtI5thh58vg_8mDrtdg"; const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // ================= ETAT ================= let currentUser = null; let currentProfile = null; let userPos = null; // {lat, lng} let category = 'objets'; let authMode = 'login'; // 'login' | 'signup' let currentView = 'discover'; // ================= UTILS ================= function haversine(lat1, lng1, lat2, lng2){ if(lat1==null || lng1==null || lat2==null || lng2==null) return null; const R = 6371; const dLat = (lat2-lat1) * Math.PI/180; const dLng = (lng2-lng1) * Math.PI/180; const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); } function fmtKm(km){ return km==null ? "distance inconnue" : (km<1 ? Math.round(km*1000)+" m" : km.toFixed(1)+" km"); } let manualAddress = null; function getGeo(){ updateAddrPill(); if(!navigator.geolocation){ updateAddrPill(); return; } navigator.geolocation.getCurrentPosition( pos => { userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude }; updateAddrPill(); loadFeed(); }, err => { updateAddrPill(); }, { enableHighAccuracy:false, timeout:8000 } ); } function updateAddrPill(){ const label = document.getElementById('addrPillLabel'); if(!label) return; if(manualAddress) label.textContent = manualAddress; else if(currentProfile?.address) label.textContent = currentProfile.address; else if(userPos) label.textContent = "position activée"; else label.textContent = "position non détectée"; } function openAddressEdit(){ document.getElementById('addrInput').value = manualAddress || currentProfile?.address || ''; document.getElementById('addrMsg').innerHTML = ''; document.getElementById('addrOverlay').classList.remove('hidden'); } function closeAddressEdit(){ document.getElementById('addrOverlay').classList.add('hidden'); } function saveAddressEdit(){ const v = document.getElementById('addrInput').value.trim(); if(!v){ document.getElementById('addrMsg').innerHTML = `<div class="msg err">Entre une adresse.</div>`; return; } manualAddress = v; updateAddrPill(); closeAddressEdit(); } // ================= AUTH ================= function renderAuth(){ const el = document.getElementById('authView'); if(authMode === 'signup'){ el.innerHTML = ` <div class="auth-title">Créer un compte</div> <label>Nom complet</label> <input id="suName" placeholder="ex: Camille Dupont"> <label>Téléphone</label> <input id="suPhone" type="tel" placeholder="ex: 06 12 34 56 78"> <label>Adresse</label> <input id="suAddress" placeholder="ex: 12 rue de la République, 69006 Lyon"> <label>Email (identifiant)</label> <input id="suEmail" type="email" placeholder="ex: toi@email.com"> <label>Mot de passe</label> <input id="suPassword" type="password" placeholder="8 caractères minimum"> <button class="btn-main" onclick="doSignup()">Créer mon compte</button> <div id="authMsg"></div> <div class="switch-link" onclick="authMode='login'; renderAuth();">J'ai déjà un compte → me connecter</div> `; } else { el.innerHTML = ` <div class="auth-title">Toc<span style="color:var(--coral)">Toc</span></div> <p style="text-align:center; font-size:12.5px; color:rgba(43,33,64,0.6);">Connecte-toi pour voir et publier des objets</p> <label>Email</label> <input id="liEmail" type="email" placeholder="ex: toi@email.com"> <label>Mot de passe</label> <input id="liPassword" type="password" placeholder="••••••••"> <button class="btn-main" onclick="doLogin()">Se connecter</button> <div id="authMsg"></div> <div class="switch-link" onclick="authMode='signup'; renderAuth();">Pas encore de compte → en créer un</div> `; } } function showAuthMsg(text, ok){ const box = document.getElementById('authMsg'); box.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`; } async function doSignup(){ const name = document.getElementById('suName').value.trim(); const phone = document.getElementById('suPhone').value.trim(); const address = document.getElementById('suAddress').value.trim(); const email = document.getElementById('suEmail').value.trim(); const password = document.getElementById('suPassword').value; if(!name || !phone || !address || !email || !password){ showAuthMsg("Merci de remplir tous les champs.", false); return; } showAuthMsg("Création en cours…", true); const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, phone, address } } }); if(error){ showAuthMsg("Erreur : " + error.message, false); return; } showAuthMsg("✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis reviens te connecter.", true); } async function doLogin(){ const email = document.getElementById('liEmail').value.trim(); const password = document.getElementById('liPassword').value; if(!email || !password){ showAuthMsg("Renseigne ton email et ton mot de passe.", false); return; } showAuthMsg("Connexion…", true); const { data, error } = await sb.auth.signInWithPassword({ email, password }); if(error){ showAuthMsg("Erreur : " + error.message, false); return; } await onLoggedIn(data.user); } async function onLoggedIn(user){ currentUser = user; const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single(); currentProfile = profile; document.getElementById('authView').classList.add('hidden'); document.getElementById('mainView').classList.remove('hidden'); document.getElementById('userPill').textContent = "✓ " + (profile?.name?.split(' ')[0] || 'Connecté'); getGeo(); loadFeed(); updateNotifBadge(); } async function doLogout(){ await sb.auth.signOut(); currentUser = null; currentProfile = null; document.getElementById('mainView').classList.add('hidden'); document.getElementById('authView').classList.remove('hidden'); authMode = 'login'; renderAuth(); } // ================= NAVIGATION ================= function switchView(v){ currentView = v; ['discover','mine','notifs','profile'].forEach(x=>{ document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==v); document.getElementById('nav'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('active', x===v); }); document.getElementById('segmentedBar').classList.toggle('hidden', v!=='discover'); document.getElementById('statusRow').classList.toggle('hidden', v!=='discover'); if(v==='mine') loadMine(); if(v==='notifs') loadNotifs(); if(v==='profile') renderProfile(); } function setCategory(c){ category = c; document.getElementById('segObjets').classList.toggle('active', c==='objets'); document.getElementById('segNourriture').classList.toggle('active', c==='nourriture'); feedIndex = 0; loadFeed(); } // ================= FEED (pile à swiper) ================= let feedItems = []; let feedIndex = 0; let ownerMap = {}; let selectedDuration = 30; function onDurInput(v){ selectedDuration = parseInt(v); document.getElementById('durVal').textContent = fmtDuration(selectedDuration); } function fmtDuration(mins){ if(mins < 60) return mins + " min"; const h = Math.floor(mins/60), m = mins%60; return m===0 ? h+"h" : h+"h"+String(m).padStart(2,'0'); } async function loadFeed(){ const stack = document.getElementById('stack'); stack.innerHTML = `<div class="empty">Chargement…</div>`; const { data: items, error } = await sb.from('items') .select('*') .eq('status','disponible') .eq('category', category) .order('created_at', { ascending:false }); if(error){ stack.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; } feedItems = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id)); feedIndex = 0; document.getElementById('itemCount').textContent = feedItems.length + " annonce(s)"; const ownerIds = [...new Set(feedItems.map(i=>i.owner_id))]; const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] }; ownerMap = Object.fromEntries((owners||[]).map(o=>[o.id,o])); renderStack(); } function renderStack(){ const stack = document.getElementById('stack'); stack.innerHTML = ''; if(feedIndex >= feedItems.length){ stack.innerHTML = `<div class="empty">Plus rien pour l'instant dans cette catégorie.<br>Reviens plus tard ou change de rayon.</div>`; return; } [1,0].forEach(offset=>{ const i = feedIndex + offset; if(i >= feedItems.length) return; const it = feedItems[i]; const owner = ownerMap[it.owner_id] || {}; const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null; const el = document.createElement('div'); el.className = 'swcard ' + (offset===0 ? 'front' : 'behind'); el.innerHTML = ` <div class="swart"> ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : `<div class="noimg">📦</div>`} <div class="sw-loc">📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}</div> <div class="sw-free">GRATUIT</div> <div class="sw-hint like">JE RÉSERVE</div> <div class="sw-hint pass">JE PASSE</div> </div> <div class="swinfo"> <div class="card-title">${it.name}</div> <div class="card-meta">${it.pickup_time ? '🕐 dispo '+it.pickup_time : '🏁 Premier arrivé, premier servi'}</div> <div class="card-desc">${it.description||''}</div> </div> `; if(offset===0) addDrag(el); stack.appendChild(el); }); } function addDrag(card){ let startX=0, dx=0, dragging=false; const likeHint = card.querySelector('.sw-hint.like'); const passHint = card.querySelector('.sw-hint.pass'); function onDown(x){ dragging=true; startX=x; card.style.transition='none'; } function onMove(x){ if(!dragging) return; dx = x-startX; card.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`; likeHint.style.opacity = Math.max(0, dx/60); passHint.style.opacity = Math.max(0, -dx/60); } function onUp(){ if(!dragging) return; dragging=false; card.style.transition='transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s'; if(dx > 90) swipeAway(card, 1, true); else if(dx < -90) swipeAway(card, -1, false); else { card.style.transform=''; likeHint.style.opacity=0; passHint.style.opacity=0; } } card.addEventListener('mousedown', e=>onDown(e.clientX)); window.addEventListener('mousemove', e=>onMove(e.clientX)); window.addEventListener('mouseup', onUp); card.addEventListener('touchstart', e=>onDown(e.touches[0].clientX), {passive:true}); card.addEventListener('touchmove', e=>onMove(e.touches[0].clientX), {passive:true}); card.addEventListener('touchend', onUp); } function swipeAway(card, dir, didReserve){ card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`; card.style.opacity = '0'; const item = feedItems[feedIndex]; if(didReserve) reserveItem(item.id, selectedDuration); setTimeout(()=>{ feedIndex++; renderStack(); }, 300); } function passTop(){ const card = document.querySelector('#stack .swcard.front'); if(card) swipeAway(card, -1, false); } function reserveTop(){ const card = document.querySelector('#stack .swcard.front'); if(card) swipeAway(card, 1, true); } async function reserveItem(itemId, durationMinutes){ if(!currentUser) return; const expiresAt = new Date(Date.now() + durationMinutes*60*1000).toISOString(); const { data: itemRow } = await sb.from('items').select('owner_id,name').eq('id', itemId).single(); const { error: e1 } = await sb.from('reservations').insert({ item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt }); if(e1){ alert("Erreur : " + e1.message); return; } await sb.from('items').update({ status:'reserve' }).eq('id', itemId); if(itemRow){ await sb.from('notifications').insert({ user_id: itemRow.owner_id, type: 'reservation_incoming', message: `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.` }); } } // ================= PUBLIER ================= let pubPhotoFile = null; let pubPhotoPreviewUrl = null; let pub = { desc:'', etat:'Bon état', duration:12, pickup:'' }; function openPublish(){ pubPhotoFile = null; pubPhotoPreviewUrl = null; pub = { desc:'', etat:'Bon état', duration:12, pickup:'' }; document.getElementById('publishOverlay').classList.remove('hidden'); renderPublish(); } function closePublish(){ document.getElementById('publishOverlay').classList.add('hidden'); } function renderPublish(){ const body = document.getElementById('publishBody'); body.innerHTML = ` ${pubPhotoPreviewUrl ? `<img src="${pubPhotoPreviewUrl}" class="preview-img">` : ''} <input type="file" accept="image/*" capture="environment" id="pubFileInput" onchange="onPickPhoto(event)"> <label>Description</label> <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea> <label>État</label> <div class="chip-row" id="etatChips"> ${['Neuf','Très bon état','Bon état','Usé'].map(e=>`<button class="chip ${pub.etat===e?'active':''}" onclick="setEtat('${e}')">${e}</button>`).join('')} </div> <label>Temps en ligne</label> <div class="chip-row" id="durChips"> ${[6,12,24].map(h=>`<button class="chip ${pub.duration===h?'active':''}" onclick="setDur(${h})">${h}h</button>`).join('')} </div> <label>Horaire disponible pour venir chercher</label> <input type="time" id="pPickup" value="${pub.pickup}" oninput="pub.pickup=this.value"> <button class="btn-main" onclick="submitPublish()">🚀 Mettre en ligne</button> <div id="pubMsg"></div> `; } function onPickPhoto(e){ const f = e.target.files[0]; if(!f) return; pubPhotoFile = f; pubPhotoPreviewUrl = URL.createObjectURL(f); renderPublish(); } function setEtat(e){ pub.etat=e; renderPublish(); } function setDur(h){ pub.duration=h; renderPublish(); } async function submitPublish(){ if(!currentUser) return; const msg = document.getElementById('pubMsg'); msg.innerHTML = `<div class="msg ok">Publication en cours…</div>`; let photoUrl = null; if(pubPhotoFile){ const path = `${currentUser.id}/${Date.now()}-${pubPhotoFile.name}`; const { error: upErr } = await sb.storage.from('photos').upload(path, pubPhotoFile); if(upErr){ msg.innerHTML = `<div class="msg err">Erreur photo : ${upErr.message}</div>`; return; } const { data: pub2 } = sb.storage.from('photos').getPublicUrl(path); photoUrl = pub2.publicUrl; } const name = (pub.desc.split(' ').slice(0,4).join(' ')) || "Nouvel objet"; const { error } = await sb.from('items').insert({ owner_id: currentUser.id, name, description: pub.desc, etat: pub.etat, category, photo_url: photoUrl, city: manualAddress || currentProfile?.address || currentProfile?.city || 'Lyon', lat: userPos?.lat, lng: userPos?.lng, pickup_time: pub.pickup, duration_hours: pub.duration, status: 'disponible' }); if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; } closePublish(); switchView('discover'); loadFeed(); } // ================= MES OBJETS ================= async function loadMine(){ const el = document.getElementById('viewMine'); el.innerHTML = `<div class="empty">Chargement…</div>`; const { data: myItems } = await sb.from('items').select('*').eq('owner_id', currentUser.id).order('created_at',{ascending:false}); const myItemIds = (myItems||[]).map(i=>i.id); const { data: incomingRes } = myItemIds.length ? await sb.from('reservations').select('*').in('item_id', myItemIds) : { data: [] }; const { data: myRes } = await sb.from('reservations').select('*').eq('receiver_id', currentUser.id).order('created_at',{ascending:false}); const resItemIds = (myRes||[]).map(r=>r.item_id); const { data: resItems } = resItemIds.length ? await sb.from('items').select('*').in('id', resItemIds) : { data: [] }; const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i])); let html = `<h3 style="font-family:'Baloo 2',sans-serif;">📦 Mes annonces</h3>`; if(!myItems || myItems.length===0){ html += `<div class="empty">Tu n'as encore rien publié.</div>`; } else { html += myItems.map(it => { const res = (incomingRes||[]).find(r=>r.item_id===it.id); let action = ''; if(res && !res.donor_validated){ action = `<div class="val-card">🔔 Quelqu'un a réservé cet objet !<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${currentProfile?.address||''}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`; } else if(res && res.donor_validated){ action = `<div class="msg ok">✓ Réservation validée</div>`; } return `<div class="card"> ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''} <div class="card-body"> <div class="card-title">${it.name}</div> <div class="card-meta">${it.status==='reserve'?'RÉSERVÉ':'EN LIGNE'}</div> ${action} </div></div>`; }).join(''); } html += `<h3 style="font-family:'Baloo 2',sans-serif; margin-top:20px;">🎁 Mes réservations</h3>`; if(!myRes || myRes.length===0){ html += `<div class="empty">Aucune réservation en cours.</div>`; } else { html += myRes.map(r => { const it = resItemMap[r.item_id]; if(!it) return ''; return `<div class="card"> ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''} <div class="card-body"> <div class="card-title">${it.name}</div> ${r.donor_validated ? `<div class="addr-line">📍 Adresse : consulte tes notifications</div>` : `<div class="card-meta">⏳ En attente de validation du donneur</div>`} </div></div>`; }).join(''); } el.innerHTML = html; } async function validateReservation(resId, address, itemName){ const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single(); if(!res) return; await sb.from('reservations').update({ donor_validated:true }).eq('id', resId); await sb.from('notifications').insert({ user_id: res.receiver_id, type: 'address', message: `Ta réservation pour "${itemName}" est validée. Adresse pour venir chercher : ${address || 'à demander au donneur'}.` }); loadMine(); } // ================= NOTIFICATIONS ================= const notifIcons = { reservation_incoming:'🔔', address:'📍', won:'🏆' }; async function loadNotifs(){ const el = document.getElementById('viewNotifs'); el.innerHTML = `<div class="empty">Chargement…</div>`; const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}); if(!notifs || notifs.length===0){ el.innerHTML = `<div class="section-title">🔔 Notifications</div><div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`; return; } el.innerHTML = `<div class="section-title">🔔 Notifications</div>` + notifs.map(n => ` <div class="notif-card"> <div class="notif-head"> <div class="notif-thumb">${notifIcons[n.type] || '🔔'}</div> <div> <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : 'Notification'}</div> <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div> </div> </div> <div class="notif-msg">${n.message}</div> ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="switchView('mine')">Valider maintenant →</button>` : ''} </div> `).join(''); await sb.from('notifications').update({ read:true }).eq('user_id', currentUser.id).eq('read', false); updateNotifBadge(); } async function updateNotifBadge(){ const { count } = await sb.from('notifications').select('*', { count:'exact', head:true }).eq('user_id', currentUser.id).eq('read', false); const badge = document.getElementById('notifBadge'); badge.textContent = count || 0; badge.classList.toggle('hidden', !count); } // ================= PROFIL ================= function renderProfile(){ const el = document.getElementById('viewProfile'); const initials = (currentProfile?.name || 'TO').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); const memberSince = currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : ''; el.innerHTML = ` <div class="profile-head"> <div class="profile-avatar">${initials}</div> <div> <div class="profile-name">${currentProfile?.name || 'Toi'}</div> <div class="profile-sub">Membre depuis ${memberSince}</div> </div> </div> <div class="trust-badge">🌱 Nouveau sur Toc Toc</div> <div class="section-title">Mes données personnelles</div> <label>Nom</label> <input id="prName" value="${currentProfile?.name||''}"> <label>Téléphone</label> <input id="prPhone" value="${currentProfile?.phone||''}"> <label>Adresse</label> <input id="prAddress" value="${currentProfile?.address||''}"> <button class="btn-main" onclick="saveProfile()">Enregistrer</button> <div id="profMsg"></div> <button class="btn btn-ghost" style="width:100%; margin-top:20px;" onclick="doLogout()">Se déconnecter</button> `; } async function saveProfile(){ const name = document.getElementById('prName').value.trim(); const phone = document.getElementById('prPhone').value.trim(); const address = document.getElementById('prAddress').value.trim(); const { error } = await sb.from('profiles').update({ name, phone, address }).eq('id', currentUser.id); const msg = document.getElementById('profMsg'); if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; } currentProfile = { ...currentProfile, name, phone, address }; document.getElementById('userPill').textContent = "✓ " + (name.split(' ')[0] || 'Connecté'); msg.innerHTML = `<div class="msg ok">✓ Enregistré</div>`; } // ================= INIT ================= async function init(){ renderAuth(); const { data: { session } } = await sb.auth.getSession(); if(session?.user){ await onLoggedIn(session.user); } else { document.getElementById('authView').classList.remove('hidden'); } } init(); </script> </body> </html>
+  .segmented{ display:flex; gap:6px; padding:10px 18px; background:#F2ECFF; margin:12px 18px; border-radius:100px; border:2px solid var(--ink); }
+  .seg-btn{ flex:1; border:none; background:transparent; padding:9px 0; border-radius:100px; font-family:'Baloo 2',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer; transition:all .15s; }
+  .seg-btn.active{ background:var(--teal); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,0.15); }
+
+  .status-row{ display:flex; justify-content:space-between; align-items:center; padding:0 18px 10px; font-size:11px; color:rgba(43,33,64,0.55); font-family:'Space Mono',monospace; }
+  .addr-pill{ background:var(--ink); color:#fff; border:2px solid var(--ink); font-family:'Space Mono',monospace; font-size:11px; padding:8px 12px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 0 rgba(0,0,0,0.15); transition:transform .1s; }
+  .addr-pill:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
+  .publish-btn{ margin:0 18px 14px; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--purple); color:#fff; border:2px solid var(--ink); padding:13px; border-radius:16px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
+  .publish-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
+
+  .feed{ padding:0 18px; display:flex; flex-direction:column; gap:14px; }
+  .card{ border:2px solid var(--ink); border-radius:20px; overflow:hidden; background:var(--paper); position:relative; }
+  .card.done{ opacity:0.85; }
+  .done-ribbon{ position:absolute; top:16px; right:-58px; transform:rotate(40deg); background:var(--teal); color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:10.5px; padding:6px 56px; box-shadow:0 3px 8px rgba(0,0,0,0.25); z-index:3; text-align:center; white-space:nowrap; }
+  .card img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#F2ECFF; }
+  .card-body{ padding:12px 14px; }
+  .card-title{ font-family:'Baloo 2',sans-serif; font-weight:600; font-size:16px; color:var(--ink); }
+  .card-meta{ font-size:11.5px; color:rgba(43,33,64,0.6); margin-top:3px; }
+  .card-desc{ font-size:12px; margin-top:6px; color:rgba(43,33,64,0.75); }
+  .card-foot{ margin-top:10px; display:flex; gap:8px; }
+  .btn{ border:2px solid var(--ink); border-radius:12px; padding:10px 14px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,0.15); transition:transform .1s, box-shadow .1s; }
+  .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
+  .btn-teal{ background:var(--teal); color:#fff; flex:1; }
+  .btn-ghost{ background:#F2ECFF; color:var(--ink); }
+  .empty{ text-align:center; padding:40px 20px; color:rgba(43,33,64,0.5); font-size:13px; }
+
+  /* Swipe stack */
+  .stack{ position:relative; height:420px; margin:0 18px 14px; }
+  .swcard{ position:absolute; inset:0; background:var(--paper); border:2px solid var(--ink); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; transition:transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s; cursor:grab; user-select:none; }
+  .swcard:active{ cursor:grabbing; }
+  .swcard.behind{ transform:scale(0.95) translateY(12px); z-index:1; }
+  .swcard.front{ z-index:3; }
+  .swart{ flex:1; position:relative; background:linear-gradient(160deg,#F2ECFF,var(--purple)); }
+  .swart img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .swart .noimg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:40px; }
+  .sw-loc{ position:absolute; top:12px; left:12px; background:var(--ink); color:#fff; font-family:'Space Mono',monospace; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; }
+  .sw-free{ position:absolute; top:12px; right:12px; background:var(--yellow); color:var(--ink); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; }
+  .sw-hint{ position:absolute; top:44px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; padding:6px 12px; border:2.5px solid; border-radius:8px; opacity:0; z-index:5; background:#fff; }
+  .sw-hint.like{ right:12px; color:var(--teal-dark); border-color:var(--teal); transform:rotate(8deg); }
+  .sw-hint.pass{ left:12px; color:var(--coral-dark); border-color:var(--coral); transform:rotate(-8deg); }
+  .swinfo{ padding:10px 14px 12px; border-top:2px solid var(--ink); }
+  .swbar{ margin:0 18px 12px; background:rgba(58,46,110,0.62); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1.5px solid rgba(255,255,255,0.3); border-radius:20px; padding:14px 16px; box-shadow:0 12px 28px rgba(58,46,110,0.28); }
+  .swbar-label{ color:rgba(255,255,255,0.75); font-size:11px; font-family:'Space Mono',monospace; margin-bottom:8px; }
+  .swbar-slider{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .swbar-slider input[type=range]{ flex:1; }
+  .swbar-val{ color:#fff; font-family:'Space Mono',monospace; font-weight:700; font-size:13px; background:rgba(255,255,255,0.22); padding:5px 9px; border-radius:8px; min-width:44px; text-align:center; }
+  .swbar-ticks{ display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9px; color:rgba(255,255,255,0.5); margin-bottom:10px; }
+  .swbar-actions{ display:flex; gap:8px; }
+  .btn-pass2{ width:46px; background:rgba(255,255,255,0.18); border:1.5px solid rgba(255,255,255,0.3); border-radius:12px; color:#fff; font-size:17px; cursor:pointer; transition:transform .1s; }
+  .btn-pass2:active{ transform:translateY(2px); }
+  .btn-reserve{ flex:1; background:var(--teal); color:#fff; border:2px solid rgba(255,255,255,0.4); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; padding:12px 0; border-radius:12px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.2); transition:transform .1s, box-shadow .1s; }
+  .btn-reserve:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.2); }
+
+  .auth-wrap{ padding:40px 24px; display:flex; flex-direction:column; gap:10px; }
+  .auth-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:var(--ink); text-align:center; margin-bottom:8px; }
+  input, textarea, select{ width:100%; padding:12px 14px; border-radius:12px; border:2px solid var(--ink); font-family:'Work Sans',sans-serif; font-size:14px; outline:none; }
+  textarea{ resize:none; min-height:70px; }
+  label{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; color:var(--ink); margin-top:6px; }
+  .btn-main{ background:var(--purple); color:#fff; border:2px solid var(--ink); padding:13px; border-radius:14px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; cursor:pointer; margin-top:8px; box-shadow:0 4px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
+  .btn-main:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
+  .switch-link{ text-align:center; font-size:12.5px; color:var(--purple); cursor:pointer; text-decoration:underline; margin-top:6px; }
+  .msg{ font-size:12.5px; padding:10px; border-radius:10px; margin-top:6px; }
+  .msg.ok{ background:rgba(0,191,166,0.12); color:var(--teal-dark); }
+  .msg.err{ background:rgba(255,90,95,0.12); color:var(--coral-dark); }
+
+  .overlay{ position:fixed; inset:0; background:rgba(20,14,36,0.6); display:flex; align-items:flex-end; z-index:200; }
+
+  /* Story plein écran (au clic sur la photo) */
+  .story-overlay{ position:fixed; inset:0; z-index:300; overflow:hidden; }
+
+  /* Visite guidée — bulles dynamiques */
+  .tour-scrim{ position:fixed; inset:0; z-index:400; background:rgba(20,14,36,0.45); }
+  .tour-scrim.hidden{ display:none; }
+  .tour-spot{ position:fixed; z-index:401; border-radius:18px; box-shadow:0 0 0 6px rgba(255,201,60,0.35), 0 0 0 2000px rgba(20,14,36,0.55); pointer-events:none; transition:all .35s cubic-bezier(.2,.8,.3,1); animation:tourPulse 1.4s ease-in-out infinite; }
+  .tour-spot.hidden{ display:none; }
+  @keyframes tourPulse{ 0%,100%{ box-shadow:0 0 0 6px rgba(255,201,60,0.35), 0 0 0 2000px rgba(20,14,36,0.55);} 50%{ box-shadow:0 0 0 11px rgba(255,201,60,0.18), 0 0 0 2000px rgba(20,14,36,0.55);} }
+  .tour-bubble{ position:fixed; z-index:403; width:230px; background:var(--ink); color:#fff; border-radius:16px; padding:12px 14px 12px; box-shadow:0 16px 32px rgba(0,0,0,0.4); cursor:pointer; transition:top .35s cubic-bezier(.2,.8,.3,1), left .35s cubic-bezier(.2,.8,.3,1); }
+  .tour-bubble.hidden{ display:none; }
+  .tour-bubble::before{ content:""; position:absolute; width:14px; height:14px; background:var(--ink); transform:rotate(45deg); }
+  .tour-bubble.arrow-top::before{ top:-6px; left:var(--al, 24px); }
+  .tour-bubble.arrow-bottom::before{ bottom:-6px; left:var(--al, 24px); }
+  .tour-dots{ display:flex; gap:4px; margin-bottom:8px; }
+  .tour-dots div{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,0.25); }
+  .tour-dots div.done{ background:var(--teal); }
+  .tour-dots div.active{ background:var(--yellow); }
+  .tour-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:6px; }
+  .tour-text{ font-size:11px; color:rgba(255,255,255,0.8); line-height:1.4; margin-top:4px; }
+  .tour-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .tour-skip{ background:none; border:none; color:rgba(255,255,255,0.5); font-family:'Inter',sans-serif; font-size:10.5px; cursor:pointer; padding:2px; }
+  .tour-next{ background:var(--teal); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11.5px; padding:7px 14px; border-radius:100px; cursor:pointer; }
+  .story-overlay.hidden{ display:none; }
+  .story-bg{ position:absolute; inset:-10%; background:
+      radial-gradient(circle at 20% 15%, var(--coral) 0%, transparent 55%),
+      radial-gradient(circle at 85% 25%, var(--purple) 0%, transparent 55%),
+      radial-gradient(circle at 50% 90%, var(--teal) 0%, transparent 55%),
+      #1D1830;
+    filter:blur(50px) saturate(1.3);
+    opacity:0.9;
+  }
+  .story-top{ position:absolute; top:0; left:0; right:0; z-index:2; padding:16px 16px 0; display:flex; align-items:center; gap:10px; }
+  .story-bars{ flex:1; display:flex; gap:5px; }
+  .story-bars div{ flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,0.3); }
+  .story-bars div.active{ background:#fff; }
+  .story-close{ width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.35); border:1.5px solid rgba(255,255,255,0.4); color:#fff; font-size:16px; cursor:pointer; flex-shrink:0; }
+  .story-stage{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:60px 14px 190px; z-index:1; }
+  .story-stage img{ max-width:100%; max-height:100%; border-radius:22px; box-shadow:0 30px 60px rgba(0,0,0,0.5); object-fit:cover; }
+  .story-arrow{ position:absolute; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; background:rgba(0,0,0,0.35); border:1.5px solid rgba(255,255,255,0.4); color:#fff; font-size:20px; cursor:pointer; z-index:3; display:flex; align-items:center; justify-content:center; }
+  .story-arrow.left{ left:10px; }
+  .story-arrow.right{ right:10px; }
+  .story-info{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:20px 20px 30px; background:linear-gradient(0deg, rgba(0,0,0,0.75), transparent); }
+  .story-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:#fff; }
+  .story-meta{ font-family:'Space Mono',monospace; font-size:12px; color:rgba(255,255,255,0.75); margin-top:6px; }
+  .story-reserve{ width:100%; margin-top:16px; background:var(--teal); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15px; padding:14px 0; border-radius:14px; cursor:pointer; }
+  .story-reserve.done{ background:var(--yellow); color:var(--ink); }
+  .overlay.hidden{ display:none; }
+  .sheet{ background:var(--paper); width:100%; max-width:460px; margin:0 auto; border-radius:24px 24px 0 0; padding:20px; max-height:88vh; overflow-y:auto; }
+  .sheet-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .sheet-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:17px; color:var(--ink); }
+  .x-btn{ background:#F2ECFF; border:2px solid var(--ink); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px; box-shadow:0 2px 0 rgba(0,0,0,0.15); }
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{ padding:9px 13px; border-radius:11px; border:2px solid var(--ink); background:var(--paper); font-family:'Baloo 2',sans-serif; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,0.12); transition:transform .1s, box-shadow .1s; }
+  .chip:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.12); }
+  .chip.active{ background:var(--purple); color:#fff; }
+  .preview-img{ width:100%; border-radius:14px; margin-bottom:10px; max-height:220px; object-fit:cover; }
+
+  .navrow{ position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:10px 0 18px; max-width:460px; margin:0 auto; z-index:100; box-shadow:0 -2px 12px rgba(0,0,0,0.06); }
+  .navbtn{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; font-family:'Baloo 2',sans-serif; font-size:10px; color:rgba(43,33,64,0.4); cursor:pointer; }
+  .navbtn.active{ color:var(--purple); font-weight:700; }
+  .nav-logo-circle{ width:22px; height:22px; border-radius:50%; background:#FFF6EC; border:1.5px solid var(--ink); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .nav-logo-circle svg{ width:16px; height:16px; }
+  .badge{ position:relative; top:-2px; background:var(--coral); color:#fff; font-size:9px; border-radius:100px; padding:1px 5px; margin-left:3px; }
+
+  .val-card{ background:#F2ECFF; border:2px dashed var(--purple); border-radius:14px; padding:12px; margin-top:8px; font-size:12px; }
+  .addr-line{ font-family:'Space Mono',monospace; font-size:12px; color:var(--teal-dark); margin-top:6px; }
+  .hidden{ display:none !important; }
+
+  /* Notifications — style maquette 19 */
+  .notif-card{ background:var(--paper); border:2px solid var(--ink); border-radius:16px; padding:12px 14px; margin-bottom:10px; }
+  .notif-head{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .notif-thumb{ width:38px; height:38px; border-radius:10px; flex-shrink:0; background:#F2ECFF; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .notif-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13.5px; color:var(--ink); }
+  .notif-time{ font-size:10.5px; color:rgba(43,33,64,0.5); font-family:'Space Mono',monospace; margin-top:1px; }
+  .notif-msg{ font-size:11.5px; color:rgba(43,33,64,0.75); line-height:1.4; margin-bottom:8px; }
+  .notif-action{ background:var(--teal); color:#fff; border:none; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11.5px; padding:8px 14px; border-radius:9px; cursor:pointer; }
+
+  /* Profil — style maquette 19 */
+  .profile-head{ display:flex; align-items:center; gap:12px; padding:8px 4px 14px; }
+  .profile-avatar{ width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, var(--coral), var(--purple)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:20px; flex-shrink:0; border:2px solid var(--ink); }
+  .profile-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink); }
+  .profile-sub{ font-size:11.5px; color:rgba(43,33,64,0.55); margin-top:2px; }
+  .trust-badge{ display:inline-flex; align-items:center; gap:6px; background:var(--yellow); border:1.5px solid var(--ink); color:var(--ink); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:12px; padding:6px 12px; border-radius:100px; margin-bottom:14px; }
+  .section-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; color:var(--ink); margin:14px 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- Auth -->
+  <div id="authView" class="auth-wrap hidden"></div>
+
+  <!-- Main app -->
+  <div id="mainView" class="hidden">
+    <div class="topbar">
+      <div class="brand">
+        <svg class="knock-logo" viewBox="0 0 40 40" fill="none">
+          <rect x="6" y="4" width="28" height="34" rx="4" fill="#FFD9AE" stroke="#3A2E6E" stroke-width="2.2"/>
+          <circle cx="26" cy="21" r="2.6" fill="#FF5A5F"/>
+          <circle cx="13" cy="12" r="2.3" fill="#00BFA6"/>
+          <circle cx="13" cy="20" r="2.3" fill="#8B5CF6" opacity="0.55"/>
+        </svg>
+        Toc<span>Toc</span> <span style="font-size:10px; color:rgba(43,33,64,0.4);">· test</span>
+        <button class="tour-replay-btn" onclick="startTour()" title="Revoir la présentation">?</button>
+      </div>
+      <button class="pill connected" id="userPill" onclick="switchView('profile')">…</button>
+    </div>
+
+    <div class="segmented" id="segmentedBar">
+      <button class="seg-btn active" id="segObjets" onclick="setCategory('objets')">📦 Objets</button>
+      <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')">🍎 Nourriture</button>
+    </div>
+    <div class="status-row" id="statusRow">
+      <button class="addr-pill" id="addrPill" onclick="switchView('profile')">📍 <span id="addrPillLabel">localisation…</span></button>
+      <span id="itemCount"></span>
+    </div>
+
+    <!-- Découvrir -->
+    <div id="viewDiscover">
+      <button class="publish-btn" id="publishBtnMain" onclick="openPublish()">📷 Publier un objet</button>
+      <div class="stack" id="stack"></div>
+      <div class="swbar">
+        <div class="swbar-label">Durée pour venir chercher</div>
+        <div class="swbar-slider">
+          <input type="range" id="durSlider" min="15" max="480" step="15" value="30" oninput="onDurInput(this.value)">
+          <div class="swbar-val" id="durVal">30 min</div>
+        </div>
+        <div class="swbar-ticks"><span>15 min</span><span>2h</span><span>4h</span><span>8h</span></div>
+        <div class="swbar-actions">
+          <button class="btn-pass2" onclick="passTop()">✕</button>
+          <button class="btn-reserve" onclick="reserveTop()">Je réserve</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mes objets -->
+    <div id="viewMine" class="hidden">
+      <div class="segmented" id="mineTabs" style="margin:12px 18px;">
+        <button class="seg-btn active" id="mineTabAnnonces" onclick="setMineTab('annonces')">📦 Mes annonces</button>
+        <button class="seg-btn" id="mineTabReservations" onclick="setMineTab('reservations')">🎁 Mes réservations</button>
+      </div>
+      <div id="mineContent" style="padding:0 18px;"></div>
+    </div>
+
+    <!-- Notifications -->
+    <div id="viewNotifs" class="hidden" style="padding:0 18px;"></div>
+
+    <!-- Profil -->
+    <div id="viewProfile" class="hidden" style="padding:0 18px;"></div>
+
+    <div class="navrow">
+      <button class="navbtn active" id="navDiscover" onclick="switchView('discover')">
+        <span class="nav-logo-circle">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="6" y="4" width="28" height="34" rx="4" fill="#FFD9AE" stroke="#3A2E6E" stroke-width="2.5"/>
+            <circle cx="26" cy="21" r="2.8" fill="#FF5A5F"/>
+            <circle cx="13" cy="12" r="2.5" fill="#00BFA6"/>
+            <circle cx="13" cy="20" r="2.5" fill="#8B5CF6" opacity="0.55"/>
+          </svg>
+        </span>
+        <span>Découvrir</span>
+      </button>
+      <button class="navbtn" id="navMine" onclick="switchView('mine')">📦<span>Mes objets</span></button>
+      <button class="navbtn" id="navNotifs" onclick="switchView('notifs')">🔔<span>Notifs<span class="badge hidden" id="notifBadge">0</span></span></button>
+      <button class="navbtn" id="navProfile" onclick="switchView('profile')">👤<span>Profil</span></button>
+    </div>
+  </div>
+
+  <!-- Overlay publication -->
+  <div class="overlay hidden" id="publishOverlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">Nouvel objet</div>
+        <button class="x-btn" onclick="closePublish()">✕</button>
+      </div>
+      <div id="publishBody"></div>
+    </div>
+  </div>
+
+  <!-- Story plein écran -->
+  <div class="story-overlay hidden" id="storyOverlay">
+    <div class="story-bg"></div>
+    <div class="story-top">
+      <div class="story-bars" id="storyBars"></div>
+      <button class="story-close" onclick="closeStory()">✕</button>
+    </div>
+    <div class="story-stage">
+      <button class="story-arrow left" id="storyArrowLeft" onclick="storyPrev()">‹</button>
+      <img id="storyImg" src="" alt="">
+      <button class="story-arrow right" id="storyArrowRight" onclick="storyNext()">›</button>
+    </div>
+    <div class="story-info">
+      <div class="story-name" id="storyName"></div>
+      <div class="story-meta" id="storyMeta"></div>
+      <button class="story-reserve" id="storyReserveBtn" onclick="storyReserve()">🎁 Je réserve cet objet</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Visite guidée -->
+<div class="tour-scrim hidden" id="tourScrim" onclick="tourNext()"></div>
+<div class="tour-spot hidden" id="tourSpot"></div>
+<div class="tour-bubble hidden arrow-top" id="tourCard" onclick="event.stopPropagation()">
+  <div class="tour-dots" id="tourDots"></div>
+  <div class="tour-title" id="tourTitle"></div>
+  <div class="tour-text" id="tourText"></div>
+  <div class="tour-actions">
+    <button class="tour-skip" onclick="skipTour()">Passer</button>
+    <button class="tour-next" id="tourNextBtn" onclick="tourNext()">Suivant →</button>
+  </div>
+</div>
+
+<script>
+// ================= CONFIG SUPABASE =================
+const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xd21vaW15d3BjZWR6bHF5cWZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjgwNTgsImV4cCI6MjEwMzMwNDA1OH0.EZa53zL3fd2mS6XB0XUw1gcAvtI5thh58vg_8mDrtdg";
+let sb;
+try{
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(e){
+  document.body.innerHTML = `<div style="padding:40px 24px; font-family:sans-serif; text-align:center;">
+    <h2>Connexion impossible</h2>
+    <p>Le script Supabase n'a pas pu se charger (réseau lent ou bloqué). Recharge la page ou change de réseau.</p>
+  </div>`;
+}
+
+// ================= ETAT =================
+let currentUser = null;
+let currentProfile = null;
+let userPos = null; // {lat, lng}
+let category = 'objets';
+let authMode = 'login'; // 'login' | 'signup'
+let currentView = 'discover';
+
+// ================= UTILS =================
+function haversine(lat1, lng1, lat2, lng2){
+  if(lat1==null || lng1==null || lat2==null || lng2==null) return null;
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function fmtKm(km){ return km==null ? "distance inconnue" : (km<1 ? Math.round(km*1000)+" m" : km.toFixed(1)+" km"); }
+
+function getGeo(){
+  updateAddrPill();
+  if(!navigator.geolocation){
+    updateAddrPill();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      updateAddrPill();
+      loadFeed();
+    },
+    err => {
+      updateAddrPill();
+    },
+    { enableHighAccuracy:false, timeout:8000 }
+  );
+}
+
+function updateAddrPill(){
+  const label = document.getElementById('addrPillLabel');
+  if(!label) return;
+  if(currentProfile?.address){
+    label.textContent = currentProfile.address + (currentProfile.address_verified ? ' ✓' : ' (non vérifiée)');
+  }
+  else if(userPos) label.textContent = "position activée — ajoute ton adresse dans Profil";
+  else label.textContent = "position non détectée";
+}
+
+// ================= AUTH =================
+function renderAuth(){
+  const el = document.getElementById('authView');
+  if(authMode === 'signup'){
+    el.innerHTML = `
+      <div class="auth-title">Créer un compte</div>
+      <label>Nom complet</label>
+      <input id="suName" placeholder="ex: Camille Dupont">
+      <label>Téléphone</label>
+      <input id="suPhone" type="tel" placeholder="ex: 06 12 34 56 78">
+      <label>Adresse</label>
+      <input id="suAddress" placeholder="ex: 12 rue de la République, 69006 Lyon">
+      <label>Email (identifiant)</label>
+      <input id="suEmail" type="email" placeholder="ex: toi@email.com">
+      <label>Mot de passe</label>
+      <input id="suPassword" type="password" placeholder="8 caractères minimum">
+      <button class="btn-main" onclick="doSignup()">Créer mon compte</button>
+      <div id="authMsg"></div>
+      <div class="switch-link" onclick="authMode='login'; renderAuth();">J'ai déjà un compte → me connecter</div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="auth-title">Toc<span style="color:var(--coral)">Toc</span></div>
+      <p style="text-align:center; font-size:12.5px; color:rgba(43,33,64,0.6);">Connecte-toi pour voir et publier des objets</p>
+      <label>Email</label>
+      <input id="liEmail" type="email" placeholder="ex: toi@email.com">
+      <label>Mot de passe</label>
+      <input id="liPassword" type="password" placeholder="••••••••">
+      <button class="btn-main" onclick="doLogin()">Se connecter</button>
+      <div id="authMsg"></div>
+      <div class="switch-link" onclick="authMode='signup'; renderAuth();">Pas encore de compte → en créer un</div>
+    `;
+  }
+}
+
+function showAuthMsg(text, ok){
+  const box = document.getElementById('authMsg');
+  box.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`;
+}
+
+async function doSignup(){
+  const name = document.getElementById('suName').value.trim();
+  const phone = document.getElementById('suPhone').value.trim();
+  const address = document.getElementById('suAddress').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const password = document.getElementById('suPassword').value;
+  if(!name || !phone || !address || !email || !password){
+    showAuthMsg("Merci de remplir tous les champs.", false); return;
+  }
+  showAuthMsg("Création en cours…", true);
+  const { data, error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { name, phone, address } }
+  });
+  if(error){ showAuthMsg("Erreur : " + error.message, false); return; }
+  showAuthMsg("✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis reviens te connecter.", true);
+}
+
+async function doLogin(){
+  const email = document.getElementById('liEmail').value.trim();
+  const password = document.getElementById('liPassword').value;
+  if(!email || !password){ showAuthMsg("Renseigne ton email et ton mot de passe.", false); return; }
+  showAuthMsg("Connexion…", true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ showAuthMsg("Erreur : " + error.message, false); return; }
+  await onLoggedIn(data.user);
+}
+
+async function onLoggedIn(user){
+  currentUser = user;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  currentProfile = profile;
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('mainView').classList.remove('hidden');
+  document.getElementById('userPill').textContent = "✓ " + (profile?.name?.split(' ')[0] || 'Connecté');
+  getGeo();
+  loadFeed();
+  updateNotifBadge();
+  subscribeToNotifications();
+  if(!localStorage.getItem('toctoc_onboarded_v1')){
+    setTimeout(startTour, 700);
+  }
+}
+
+// ================= VISITE GUIDÉE — bulles dynamiques =================
+const tourSteps = [
+  { view:'discover', target:null, title:"Bienvenue 👋", text:"On te montre tout en quelques secondes. Tape n'importe où pour avancer." },
+  { view:'discover', target:'#stack', title:"👉 Glisse la carte", text:"À droite pour réserver, à gauche pour passer. Tape la photo pour l'agrandir." },
+  { view:'discover', target:'#publishBtnMain', title:"📷 Publier", text:"Un clic, une photo, c'est en ligne." },
+  { view:'discover', target:'#segmentedBar', title:"📦 🍎 Catégories", text:"Objets ou nourriture, tu bascules ici." },
+  { view:'mine', target:'#mineTabs', title:"📦 Mes objets", text:"Tes annonces et tes réservations, bien séparées." },
+  { view:'notifs', target:'#navNotifs', title:"🔔 Notifs", text:"Réservation reçue, adresse validée : tout arrive ici." },
+  { view:'profile', target:'#verifyGPSBtn', title:"📍 Adresse vérifiée", text:"Confirme ta position GPS pour rassurer les autres membres." },
+  { view:'discover', target:null, title:"C'est tout ! 🎉", text:"Amuse-toi bien et merci de donner une seconde vie à tes objets !" },
+];
+let tourIndex = 0;
+
+function startTour(){
+  tourIndex = 0;
+  document.getElementById('tourScrim').classList.remove('hidden');
+  document.getElementById('tourCard').classList.remove('hidden');
+  renderTourStep();
+}
+
+function renderTourStep(){
+  const step = tourSteps[tourIndex];
+  switchView(step.view);
+  document.getElementById('tourTitle').textContent = step.title;
+  document.getElementById('tourText').textContent = step.text;
+  document.getElementById('tourDots').innerHTML = tourSteps.map((_,i) =>
+    `<div class="${i<tourIndex?'done':''} ${i===tourIndex?'active':''}"></div>`
+  ).join('');
+  document.getElementById('tourNextBtn').textContent = tourIndex===tourSteps.length-1 ? "C'est parti !" : "Suivant";
+  setTimeout(() => positionTourBubble(step.target), 120);
+}
+
+function positionTourBubble(selector){
+  const spot = document.getElementById('tourSpot');
+  const bubble = document.getElementById('tourCard');
+  const target = selector ? document.querySelector(selector) : null;
+
+  if(!target){
+    spot.classList.add('hidden');
+    bubble.style.left = '50%';
+    bubble.style.top = '46%';
+    bubble.style.transform = 'translate(-50%,-50%)';
+    bubble.classList.remove('arrow-top','arrow-bottom');
+    return;
+  }
+
+  const r = target.getBoundingClientRect();
+  spot.classList.remove('hidden');
+  spot.style.left = (r.left-6)+'px';
+  spot.style.top = (r.top-6)+'px';
+  spot.style.width = (r.width+12)+'px';
+  spot.style.height = (r.height+12)+'px';
+
+  const bubbleWidth = 230;
+  const spaceBelow = window.innerHeight - r.bottom;
+  const placeBelow = spaceBelow > 160;
+
+  let left = r.left + r.width/2 - bubbleWidth/2;
+  left = Math.max(14, Math.min(left, window.innerWidth - bubbleWidth - 14));
+  bubble.style.transform = 'none';
+  bubble.style.left = left + 'px';
+
+  if(placeBelow){
+    bubble.style.top = (r.bottom + 14) + 'px';
+    bubble.classList.add('arrow-top');
+    bubble.classList.remove('arrow-bottom');
+  } else {
+    bubble.style.top = (r.top - 14 - 120) + 'px';
+    bubble.classList.add('arrow-bottom');
+    bubble.classList.remove('arrow-top');
+  }
+  // pointe de la bulle alignée sur le centre de la cible
+  const arrowLeft = Math.max(16, Math.min(r.left + r.width/2 - left - 7, bubbleWidth - 28));
+  bubble.style.setProperty('--al', arrowLeft+'px');
+}
+
+function tourNext(){
+  if(tourIndex < tourSteps.length-1){ tourIndex++; renderTourStep(); }
+  else finishTour();
+}
+function skipTour(){ finishTour(); }
+function finishTour(){
+  document.getElementById('tourScrim').classList.add('hidden');
+  document.getElementById('tourCard').classList.add('hidden');
+  document.getElementById('tourSpot').classList.add('hidden');
+  localStorage.setItem('toctoc_onboarded_v1', '1');
+  switchView('discover');
+}
+
+// ================= ALERTES SUR LE TÉLÉPHONE =================
+function subscribeToNotifications(){
+  if(!currentUser) return;
+  sb.channel('notif-'+currentUser.id)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${currentUser.id}` }, payload => {
+      updateNotifBadge();
+      if(!document.getElementById('viewNotifs').classList.contains('hidden')) loadNotifs();
+      if(Notification && Notification.permission === 'granted'){
+        new Notification('Toc Toc', { body: payload.new.message, icon: '' });
+      }
+    })
+    .subscribe();
+}
+
+async function askNotifPermission(){
+  if(!('Notification' in window)){
+    alert("Ton navigateur ne supporte pas les notifications.");
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  renderProfile();
+  if(perm === 'granted'){
+    new Notification('Toc Toc', { body: 'Les alertes sont activées ✓' });
+  }
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('authView').classList.remove('hidden');
+  authMode = 'login'; renderAuth();
+}
+
+// ================= NAVIGATION =================
+function switchView(v){
+  currentView = v;
+  ['discover','mine','notifs','profile'].forEach(x=>{
+    document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==v);
+    document.getElementById('nav'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('active', x===v);
+  });
+  document.getElementById('segmentedBar').classList.toggle('hidden', v!=='discover');
+  document.getElementById('statusRow').classList.toggle('hidden', v!=='discover');
+  if(v==='mine') loadMine();
+  if(v==='notifs') loadNotifs();
+  if(v==='profile') renderProfile();
+}
+
+function setCategory(c){
+  category = c;
+  document.getElementById('segObjets').classList.toggle('active', c==='objets');
+  document.getElementById('segNourriture').classList.toggle('active', c==='nourriture');
+  feedIndex = 0;
+  loadFeed();
+}
+
+// ================= FEED (pile à swiper) =================
+let feedItems = [];
+let feedIndex = 0;
+let ownerMap = {};
+let selectedDuration = 30;
+
+function onDurInput(v){
+  selectedDuration = parseInt(v);
+  document.getElementById('durVal').textContent = fmtDuration(selectedDuration);
+}
+function fmtDuration(mins){
+  if(mins < 60) return mins + " min";
+  const h = Math.floor(mins/60), m = mins%60;
+  return m===0 ? h+"h" : h+"h"+String(m).padStart(2,'0');
+}
+
+async function loadFeed(){
+  const stack = document.getElementById('stack');
+  stack.innerHTML = `<div class="empty">Chargement…</div>`;
+  const { data: items, error } = await sb.from('items')
+    .select('*')
+    .eq('status','disponible')
+    .eq('category', category)
+    .order('created_at', { ascending:false });
+  if(error){ stack.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
+
+  feedItems = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id));
+  feedIndex = 0;
+  document.getElementById('itemCount').textContent = feedItems.length + " annonce(s)";
+
+  const ownerIds = [...new Set(feedItems.map(i=>i.owner_id))];
+  const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
+  ownerMap = Object.fromEntries((owners||[]).map(o=>[o.id,o]));
+
+  renderStack();
+}
+
+function renderStack(){
+  const stack = document.getElementById('stack');
+  stack.innerHTML = '';
+  if(feedIndex >= feedItems.length){
+    stack.innerHTML = `<div class="empty">Plus rien pour l'instant dans cette catégorie.<br>Reviens plus tard ou change de rayon.</div>`;
+    return;
+  }
+  [1,0].forEach(offset=>{
+    const i = feedIndex + offset;
+    if(i >= feedItems.length) return;
+    const it = feedItems[i];
+    const owner = ownerMap[it.owner_id] || {};
+    const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
+    const el = document.createElement('div');
+    el.className = 'swcard ' + (offset===0 ? 'front' : 'behind');
+    el.innerHTML = `
+      <div class="swart">
+        ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">📦</div>`}
+        <div class="sw-loc">📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}</div>
+        <div class="sw-free">GRATUIT</div>
+        <div class="sw-hint like">JE RÉSERVE</div>
+        <div class="sw-hint pass">JE PASSE</div>
+      </div>
+      <div class="swinfo">
+        <div class="card-title">${it.name}</div>
+        <div class="card-meta">${it.pickup_time ? '🕐 dispo '+it.pickup_time : '🏁 Premier arrivé, premier servi'}</div>
+        <div class="card-desc">${it.description||''}</div>
+      </div>
+    `;
+    if(offset===0) addDrag(el);
+    stack.appendChild(el);
+  });
+}
+
+function addDrag(card){
+  let startX=0, dx=0, dragging=false;
+  const likeHint = card.querySelector('.sw-hint.like');
+  const passHint = card.querySelector('.sw-hint.pass');
+  function onDown(x){ dragging=true; startX=x; card.style.transition='none'; }
+  function onMove(x){
+    if(!dragging) return;
+    dx = x-startX;
+    card.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+    likeHint.style.opacity = Math.max(0, dx/60);
+    passHint.style.opacity = Math.max(0, -dx/60);
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging=false;
+    card.style.transition='transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s';
+    if(dx > 90) swipeAway(card, 1, true);
+    else if(dx < -90) swipeAway(card, -1, false);
+    else { card.style.transform=''; likeHint.style.opacity=0; passHint.style.opacity=0; }
+  }
+  card.addEventListener('mousedown', e=>onDown(e.clientX));
+  window.addEventListener('mousemove', e=>onMove(e.clientX));
+  window.addEventListener('mouseup', onUp);
+  card.addEventListener('touchstart', e=>onDown(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchmove', e=>onMove(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchend', onUp);
+}
+
+function swipeAway(card, dir, didReserve){
+  card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`;
+  card.style.opacity = '0';
+  const item = feedItems[feedIndex];
+  if(didReserve) reserveItem(item.id, selectedDuration);
+  setTimeout(()=>{ feedIndex++; renderStack(); }, 300);
+}
+
+function passTop(){
+  const card = document.querySelector('#stack .swcard.front');
+  if(card) swipeAway(card, -1, false);
+}
+function reserveTop(){
+  const card = document.querySelector('#stack .swcard.front');
+  if(card) swipeAway(card, 1, true);
+}
+
+// ================= STORY PLEIN ÉCRAN =================
+let storyIndex = 0;
+function openStory(i){
+  storyIndex = i;
+  document.getElementById('storyOverlay').classList.remove('hidden');
+  renderStory();
+}
+function closeStory(){
+  document.getElementById('storyOverlay').classList.add('hidden');
+}
+function storyPrev(){ if(storyIndex>0){ storyIndex--; renderStory(); } }
+function storyNext(){ if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } }
+
+function renderStory(){
+  const it = feedItems[storyIndex];
+  if(!it) return;
+  const owner = ownerMap[it.owner_id] || {};
+  const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
+  document.getElementById('storyImg').src = it.photo_url || '';
+  document.getElementById('storyName').textContent = it.name;
+  document.getElementById('storyMeta').textContent = `📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}${it.pickup_time ? ' · dispo '+it.pickup_time : ''}`;
+
+  const bars = document.getElementById('storyBars');
+  bars.innerHTML = feedItems.map((_,idx) => `<div class="${idx===storyIndex?'active':''}"></div>`).join('');
+
+  document.getElementById('storyArrowLeft').style.visibility = storyIndex>0 ? 'visible' : 'hidden';
+  document.getElementById('storyArrowRight').style.visibility = storyIndex<feedItems.length-1 ? 'visible' : 'hidden';
+
+  const btn = document.getElementById('storyReserveBtn');
+  btn.textContent = '🎁 Je réserve cet objet';
+  btn.classList.remove('done');
+}
+
+async function storyReserve(){
+  const it = feedItems[storyIndex];
+  if(!it) return;
+  const btn = document.getElementById('storyReserveBtn');
+  btn.textContent = 'Réservé ✓';
+  btn.classList.add('done');
+  await reserveItem(it.id, selectedDuration);
+  setTimeout(()=>{ closeStory(); loadFeed(); }, 600);
+}
+
+async function reserveItem(itemId, durationMinutes){
+  if(!currentUser) return;
+  const expiresAt = new Date(Date.now() + durationMinutes*60*1000).toISOString();
+  const { data: itemRow } = await sb.from('items').select('owner_id,name').eq('id', itemId).single();
+  const { error: e1 } = await sb.from('reservations').insert({ item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt });
+  if(e1){ alert("Erreur : " + e1.message); return; }
+  await sb.from('items').update({ status:'reserve' }).eq('id', itemId);
+  if(itemRow){
+    await sb.from('notifications').insert({
+      user_id: itemRow.owner_id,
+      type: 'reservation_incoming',
+      message: `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.`
+    });
+  }
+}
+
+// ================= PUBLIER =================
+let pubPhotoFile = null;
+let pubPhotoPreviewUrl = null;
+let pub = { desc:'', etat:'Bon état', duration:12, pickup:'' };
+
+function openPublish(){
+  pubPhotoFile = null; pubPhotoPreviewUrl = null;
+  pub = { desc:'', etat:'Bon état', duration:12, pickup:'' };
+  document.getElementById('publishOverlay').classList.remove('hidden');
+  renderPublish();
+}
+function closePublish(){ document.getElementById('publishOverlay').classList.add('hidden'); }
+
+function renderPublish(){
+  const body = document.getElementById('publishBody');
+  body.innerHTML = `
+    ${pubPhotoPreviewUrl ? `<img src="${pubPhotoPreviewUrl}" class="preview-img">` : ''}
+    <input type="file" accept="image/*" capture="environment" id="pubFileInput" onchange="onPickPhoto(event)">
+    <label>Description</label>
+    <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea>
+    <label>État</label>
+    <div class="chip-row" id="etatChips">
+      ${['Neuf','Très bon état','Bon état','Usé'].map(e=>`<button class="chip ${pub.etat===e?'active':''}" onclick="setEtat('${e}')">${e}</button>`).join('')}
+    </div>
+    <label>Temps en ligne</label>
+    <div class="chip-row" id="durChips">
+      ${[6,12,24].map(h=>`<button class="chip ${pub.duration===h?'active':''}" onclick="setDur(${h})">${h}h</button>`).join('')}
+    </div>
+    <label>Horaire disponible pour venir chercher</label>
+    <input type="time" id="pPickup" value="${pub.pickup}" oninput="pub.pickup=this.value">
+    <button class="btn-main" onclick="submitPublish()">🚀 Mettre en ligne</button>
+    <div id="pubMsg"></div>
+  `;
+}
+function onPickPhoto(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  pubPhotoFile = f;
+  pubPhotoPreviewUrl = URL.createObjectURL(f);
+  renderPublish();
+}
+function setEtat(e){ pub.etat=e; renderPublish(); }
+function setDur(h){ pub.duration=h; renderPublish(); }
+
+async function submitPublish(){
+  if(!currentUser) return;
+  const msg = document.getElementById('pubMsg');
+  msg.innerHTML = `<div class="msg ok">Publication en cours…</div>`;
+  let photoUrl = null;
+  if(pubPhotoFile){
+    const path = `${currentUser.id}/${Date.now()}-${pubPhotoFile.name}`;
+    const { error: upErr } = await sb.storage.from('photos').upload(path, pubPhotoFile);
+    if(upErr){ msg.innerHTML = `<div class="msg err">Erreur photo : ${upErr.message}</div>`; return; }
+    const { data: pub2 } = sb.storage.from('photos').getPublicUrl(path);
+    photoUrl = pub2.publicUrl;
+  }
+  const name = (pub.desc.split(' ').slice(0,4).join(' ')) || "Nouvel objet";
+  const { error } = await sb.from('items').insert({
+    owner_id: currentUser.id,
+    name, description: pub.desc, etat: pub.etat, category,
+    photo_url: photoUrl,
+    city: currentProfile?.address || currentProfile?.city || 'Lyon',
+    lat: userPos?.lat, lng: userPos?.lng,
+    pickup_time: pub.pickup, duration_hours: pub.duration,
+    status: 'disponible'
+  });
+  if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; }
+  closePublish();
+  switchView('discover');
+  loadFeed();
+}
+
+// ================= MES OBJETS =================
+let mineTab = 'annonces';
+let mineDataCache = null;
+
+function setMineTab(t){
+  mineTab = t;
+  document.getElementById('mineTabAnnonces').classList.toggle('active', t==='annonces');
+  document.getElementById('mineTabReservations').classList.toggle('active', t==='reservations');
+  renderMine();
+}
+
+async function loadMine(){
+  const el = document.getElementById('mineContent');
+  el.innerHTML = `<div class="empty">Chargement…</div>`;
+
+  const { data: myItems } = await sb.from('items').select('*').eq('owner_id', currentUser.id).order('created_at',{ascending:false});
+  const myItemIds = (myItems||[]).map(i=>i.id);
+  const { data: incomingRes } = myItemIds.length
+    ? await sb.from('reservations').select('*').in('item_id', myItemIds)
+    : { data: [] };
+
+  const { data: myRes } = await sb.from('reservations').select('*').eq('receiver_id', currentUser.id).order('created_at',{ascending:false});
+  const resItemIds = (myRes||[]).map(r=>r.item_id);
+  const { data: resItems } = resItemIds.length
+    ? await sb.from('items').select('*').in('id', resItemIds)
+    : { data: [] };
+  const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i]));
+
+  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap };
+  renderMine();
+}
+
+function renderMine(){
+  const el = document.getElementById('mineContent');
+  if(!mineDataCache){ el.innerHTML = `<div class="empty">Chargement…</div>`; return; }
+  const { myItems, incomingRes, myRes, resItemMap } = mineDataCache;
+
+  if(mineTab === 'annonces'){
+    if(myItems.length===0){
+      el.innerHTML = `<div class="empty">Tu n'as encore rien publié.</div>`;
+      return;
+    }
+    el.innerHTML = myItems.map(it => {
+      const res = incomingRes.find(r=>r.item_id===it.id);
+      let action = '';
+      let statusLabel = it.status==='reserve' ? 'RÉSERVÉ' : 'EN LIGNE';
+      let done = false;
+      if(res && !res.donor_validated){
+        const verified = currentProfile?.address_verified;
+        const addrWarning = verified ? '' : `<div style="font-size:10.5px; color:#B24C34; margin-top:4px;">⚠️ Ton adresse n'est pas encore vérifiée par GPS (Profil → Vérifier mon adresse)</div>`;
+        action = `<div class="val-card">🔔 Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
+      } else if(res && res.donor_validated){
+        done = true;
+        statusLabel = 'DONNÉ';
+      }
+      return `<div class="card ${done?'done':''}">
+        ${done ? `<div class="done-ribbon">${it.category==='nourriture' ? "Bien joué, tu as aidé quelqu'un" : "Bien joué, tu t'en es débarrassé"}</div>` : ''}
+        ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
+        <div class="card-body">
+        <div class="card-title">${it.name}</div>
+        <div class="card-meta">${statusLabel}</div>
+        ${done
+          ? `<div class="msg ok">✓ Objet remis — retiré des annonces en ligne. Reste visible ici et dans "Mes réservations" côté receveur.</div>`
+          : `<div class="addr-line" style="font-size:11px; margin-top:4px;">📍 ${currentProfile?.address || 'Adresse non renseignée'}${currentProfile?.address_verified ? ' <span style="color:var(--teal-dark); font-weight:700;">✓ vérifiée GPS</span>' : ' <span style="color:#B24C34;">(non vérifiée)</span>'}</div>`}
+        ${action}
+      </div></div>`;
+    }).join('');
+  } else {
+    if(myRes.length===0){
+      el.innerHTML = `<div class="empty">Aucune réservation en cours.</div>`;
+      return;
+    }
+    el.innerHTML = myRes.map(r => {
+      const it = resItemMap[r.item_id];
+      if(!it) return '';
+      let addrBlock = `<div class="card-meta">⏳ En attente de validation du donneur</div>`;
+      if(r.donor_validated){
+        const mapsLink = r.pickup_lat ? `<br><a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700; font-size:11px;">🗺️ Voir sur Google Maps (vérifiée GPS ✓)</a>` : '';
+        addrBlock = `<div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>`;
+      }
+      return `<div class="card">
+        ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
+        <div class="card-body">
+        <div class="card-title">${it.name}</div>
+        ${addrBlock}
+      </div></div>`;
+    }).join('');
+  }
+}
+
+async function validateReservation(resId, itemId, itemName){
+  const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
+  if(!res) return;
+  const address = currentProfile?.address || '';
+  const patch = { donor_validated:true, pickup_address: address };
+  if(currentProfile?.address_verified){
+    patch.pickup_lat = currentProfile.lat;
+    patch.pickup_lng = currentProfile.lng;
+  }
+  await sb.from('reservations').update(patch).eq('id', resId);
+  await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
+  const verifBadge = currentProfile?.address_verified ? ' (adresse vérifiée par GPS ✓)' : '';
+  await sb.from('notifications').insert({
+    user_id: res.receiver_id,
+    type: 'address',
+    message: `Ta réservation pour "${itemName}" est validée. Adresse pour venir chercher : ${address || 'à demander au donneur'}${verifBadge}.`
+  });
+  loadMine();
+}
+
+// ================= NOTIFICATIONS =================
+const notifIcons = { reservation_incoming:'🔔', address:'📍', won:'🏆' };
+async function loadNotifs(){
+  const el = document.getElementById('viewNotifs');
+  el.innerHTML = `<div class="empty">Chargement…</div>`;
+  const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).eq('read', false).order('created_at',{ascending:false});
+  if(!notifs || notifs.length===0){
+    el.innerHTML = `<div class="section-title">🔔 Notifications</div><div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="section-title">🔔 Notifications</div>` + notifs.map(n => `
+    <div class="notif-card" id="notif-${n.id}">
+      <div class="notif-head">
+        <div class="notif-thumb">${notifIcons[n.type] || '🔔'}</div>
+        <div style="flex:1;">
+          <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : 'Notification'}</div>
+          <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
+        </div>
+        <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">✕</button>
+      </div>
+      <div class="notif-msg">${n.message}</div>
+      ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
+    </div>
+  `).join('');
+  // marque tout comme lu : au prochain passage, ces notifications ne réapparaîtront plus
+  await sb.from('notifications').update({ read:true }).eq('user_id', currentUser.id).eq('read', false);
+  updateNotifBadge();
+}
+async function dismissNotif(id){
+  await sb.from('notifications').delete().eq('id', id);
+  const card = document.getElementById('notif-'+id);
+  if(card) card.remove();
+  updateNotifBadge();
+}
+async function updateNotifBadge(){
+  const { count } = await sb.from('notifications').select('*', { count:'exact', head:true }).eq('user_id', currentUser.id).eq('read', false);
+  const badge = document.getElementById('notifBadge');
+  badge.textContent = count || 0;
+  badge.classList.toggle('hidden', !count);
+}
+
+// ================= PROFIL =================
+function renderProfile(){
+  const el = document.getElementById('viewProfile');
+  const initials = (currentProfile?.name || 'TO').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const memberSince = currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : '';
+  el.innerHTML = `
+    <div class="profile-head">
+      <div class="profile-avatar">${initials}</div>
+      <div>
+        <div class="profile-name">${currentProfile?.name || 'Toi'}</div>
+        <div class="profile-sub">Membre depuis ${memberSince}</div>
+      </div>
+    </div>
+    <div class="trust-badge">🌱 Nouveau sur Toc Toc</div>
+
+    <div class="section-title">Alertes</div>
+    ${(typeof Notification!=='undefined' && Notification.permission==='granted')
+      ? `<div class="msg ok">✓ Alertes activées sur ce téléphone</div>`
+      : `<button class="publish-btn" style="width:100%;" onclick="askNotifPermission()">🔔 Activer les alertes sur ce téléphone</button>
+         <p style="font-size:11px; color:rgba(43,33,64,0.5); margin-top:8px;">Fonctionne tant que Toc Toc reste ouvert (même en arrière-plan). Autorise les notifications quand ton téléphone te le demande.</p>`}
+
+    <div class="section-title">Mes données personnelles</div>
+    <label>Nom</label>
+    <input id="prName" value="${currentProfile?.name||''}">
+    <label>Téléphone</label>
+    <input id="prPhone" value="${currentProfile?.phone||''}">
+    <label>Adresse</label>
+    <input id="prAddress" value="${currentProfile?.address||''}">
+    <button class="btn-main" onclick="saveProfile()">Enregistrer</button>
+    <div id="profMsg"></div>
+
+    <div class="section-title">Vérification de l'adresse</div>
+    ${currentProfile?.address_verified
+      ? `<div class="msg ok">✓ Adresse vérifiée par GPS le ${currentProfile.verified_at ? new Date(currentProfile.verified_at).toLocaleDateString('fr-FR') : ''}
+           <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Voir sur Google Maps</a>
+         </div>`
+      : `<p style="font-size:11.5px; color:rgba(43,33,64,0.6); margin-bottom:8px;">N'importe qui peut taper une adresse au hasard. Pour rassurer les autres membres, confirme que tu es réellement à cette adresse avec ta position GPS.</p>`}
+    <button class="btn btn-ghost" id="verifyGPSBtn" style="width:100%; margin-top:8px;" onclick="verifyAddressGPS()">📍 Vérifier mon adresse avec ma position GPS</button>
+    <div id="verifyMsg"></div>
+    <div id="verifyConfirm"></div>
+
+    <button class="btn btn-ghost" style="width:100%; margin-top:20px;" onclick="doLogout()">Se déconnecter</button>
+  `;
+}
+async function saveProfile(){
+  const name = document.getElementById('prName').value.trim();
+  const phone = document.getElementById('prPhone').value.trim();
+  const address = document.getElementById('prAddress').value.trim();
+  // si l'adresse texte change, on redemande une vérification GPS
+  const addressChanged = address !== (currentProfile?.address||'');
+  const patch = { name, phone, address };
+  if(addressChanged) patch.address_verified = false;
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
+  const msg = document.getElementById('profMsg');
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  currentProfile = { ...currentProfile, ...patch };
+  document.getElementById('userPill').textContent = "✓ " + (name.split(' ')[0] || 'Connecté');
+  msg.innerHTML = `<div class="msg ok">✓ Enregistré</div>`;
+  updateAddrPill();
+  renderProfile();
+}
+
+let pendingGPS = null;
+function verifyAddressGPS(){
+  const msg = document.getElementById('verifyMsg');
+  const confirmBox = document.getElementById('verifyConfirm');
+  confirmBox.innerHTML = '';
+  if(!navigator.geolocation){ msg.innerHTML = `<div class="msg err">Géolocalisation non disponible sur ce navigateur.</div>`; return; }
+  if(!window.isSecureContext){ msg.innerHTML = `<div class="msg err">La géolocalisation nécessite une connexion sécurisée (https). Vérifie que l'adresse du site commence bien par https://.</div>`; return; }
+  msg.innerHTML = `<div class="msg ok">Localisation en cours… (autorise la position si ton téléphone le demande)</div>`;
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    pendingGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    msg.innerHTML = '';
+    confirmBox.innerHTML = `
+      <div class="val-card">
+        📍 Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
+        <a href="https://www.google.com/maps?q=${pendingGPS.lat},${pendingGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">🗺️ Voir cette position sur Google Maps</a>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-ghost" style="flex:1;" onclick="cancelGPSVerify()">Annuler</button>
+          <button class="btn btn-teal" style="flex:1;" onclick="confirmGPSVerify()">✓ C'est bien ma position</button>
+        </div>
+      </div>
+    `;
+  }, err => {
+    let reason = "Position indisponible.";
+    if(err.code === 1) reason = "Tu as refusé l'accès à la position. Ouvre les réglages du site (icône 🔒 ou ⓘ à côté de l'adresse) → Position → Autoriser, puis réessaie.";
+    else if(err.code === 2) reason = "Ta position n'a pas pu être déterminée (GPS/Wifi coupé ?). Vérifie que la localisation est activée sur ton téléphone.";
+    else if(err.code === 3) reason = "La recherche de ta position a pris trop de temps. Réessaie, si possible en extérieur ou près d'une fenêtre.";
+    msg.innerHTML = `<div class="msg err">${reason}</div>`;
+  }, { enableHighAccuracy:false, timeout:25000, maximumAge:60000 });
+}
+
+async function confirmGPSVerify(){
+  if(!pendingGPS) return;
+  const patch = { lat: pendingGPS.lat, lng: pendingGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
+  const msg = document.getElementById('verifyMsg');
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  currentProfile = { ...currentProfile, ...patch };
+  pendingGPS = null;
+  updateAddrPill();
+  renderProfile();
+}
+function cancelGPSVerify(){
+  pendingGPS = null;
+  document.getElementById('verifyConfirm').innerHTML = '';
+}
+
+// ================= INIT =================
+async function init(){
+  renderAuth();
+  try{
+    const { data: { session } } = await sb.auth.getSession();
+    if(session?.user){ await onLoggedIn(session.user); }
+    else { document.getElementById('authView').classList.remove('hidden'); }
+  } catch(e){
+    console.error('Erreur init:', e);
+    document.getElementById('authView').classList.remove('hidden');
+    document.getElementById('authMsg') && (document.getElementById('authMsg').innerHTML = `<div class="msg err">Connexion au serveur lente ou indisponible. Réessaie.</div>`);
+  }
+}
+if(sb) init();
+</script>
+</body>
+</html>
