@@ -55,6 +55,10 @@
   /* Lignes compactes "Mes objets" */
   .item-row{ display:flex; align-items:center; gap:12px; padding:10px; border:2px solid var(--ink); border-radius:16px; background:var(--paper); margin-bottom:8px; }
   .item-row .thumb{ width:58px; height:58px; border-radius:12px; object-fit:cover; flex-shrink:0; cursor:zoom-in; background:#F2ECFF; }
+  .thumb-wrap{ position:relative; width:58px; height:58px; flex-shrink:0; }
+  .thumb-wrap .thumb, .thumb-wrap .thumb-empty{ width:100%; height:100%; margin:0; }
+  .mini-ribbon{ position:absolute; top:9px; left:-16px; width:92px; height:13px; transform:rotate(-40deg); background:var(--teal); box-shadow:0 2px 5px rgba(0,0,0,0.3); border-radius:2px; }
+  .withdraw-btn{ background:none; border:1.5px solid #B24C34; color:#B24C34; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:11px; padding:6px 12px; border-radius:9px; cursor:pointer; }
   .item-row .thumb-empty{ width:58px; height:58px; border-radius:12px; flex-shrink:0; background:#F2ECFF; display:flex; align-items:center; justify-content:center; font-size:20px; }
   .item-row .info{ flex:1; min-width:0; }
   .item-row .item-name{ font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -1170,21 +1174,33 @@ function renderMine(){
     el.innerHTML = myItems.map(it => {
       const res = incomingRes.find(r=>r.item_id===it.id);
       let action = '';
-      let statusLabel = it.status==='reserve' ? 'RÉSERVÉ' : 'EN LIGNE';
-      let statusClass = it.status==='reserve' ? 'pending' : 'online';
-      let done = false;
-      if(res && !res.donor_validated){
+      let statusLabel, statusClass;
+      let done = it.status === 'attribue';
+
+      if(done){
+        statusLabel = 'HORS LIGNE'; statusClass = 'offline';
+      } else if(res && res.donor_validated){
+        statusLabel = 'À RÉCUPÉRER'; statusClass = 'pending';
+        action = `<div class="val-card">📍 Adresse envoyée, en attente que la personne vienne chercher l'objet.<br>
+          <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}')">✓ Confirmer que l'objet a été récupéré</button>
+        </div>`;
+      } else if(res && !res.donor_validated){
+        statusLabel = 'RÉSERVÉ'; statusClass = 'pending';
         const verified = currentProfile?.address_verified;
         const addrWarning = verified ? '' : `<div style="font-size:10.5px; color:#B24C34; margin-top:4px;">⚠️ Ton adresse n'est pas encore vérifiée par GPS (Profil → Vérifier mon adresse)</div>`;
         action = `<div class="val-card">🔔 Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
-      } else if(res && res.donor_validated){
-        done = true;
-        statusLabel = 'HORS LIGNE';
-        statusClass = 'offline';
+      } else if(it.status === 'retire'){
+        statusLabel = 'RETIRÉ'; statusClass = 'offline';
+      } else {
+        statusLabel = 'EN LIGNE'; statusClass = 'online';
+        action = `<button class="withdraw-btn" onclick="withdrawItem('${it.id}')">🗑️ Retirer l'annonce</button>`;
       }
-      const thumb = it.photo_url
-        ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">`
-        : `<div class="thumb-empty">📦</div>`;
+
+      const thumb = `<div class="thumb-wrap">
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty">📦</div>`}
+        ${done ? `<div class="mini-ribbon"></div>` : ''}
+      </div>`;
+
       return `
         <div class="item-row">
           ${thumb}
@@ -1208,22 +1224,24 @@ function renderMine(){
     el.innerHTML = myRes.map(r => {
       const it = resItemMap[r.item_id];
       if(!it) return '';
-      const statusLabel = r.donor_validated ? 'VALIDÉ' : 'EN ATTENTE';
-      const statusClass = r.donor_validated ? 'online' : 'pending';
-      const thumb = it.photo_url
-        ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">`
-        : `<div class="thumb-empty">📦</div>`;
+      const done = it.status === 'attribue';
+      const statusLabel = done ? 'RÉCUPÉRÉ' : (r.donor_validated ? 'À RÉCUPÉRER' : 'EN ATTENTE');
+      const statusClass = done ? 'offline' : (r.donor_validated ? 'pending' : 'pending');
+      const thumb = `<div class="thumb-wrap">
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty">📦</div>`}
+        ${done ? `<div class="mini-ribbon"></div>` : ''}
+      </div>`;
       let addrBlock = '';
       if(r.donor_validated){
         const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Maps</a>` : '';
-        addrBlock = `<div class="item-extra"><div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div></div>`;
+        addrBlock = `<div class="item-extra"><div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>` : ''}</div>`;
       }
       return `
         <div class="item-row">
           ${thumb}
           <div class="info">
             <div class="item-name">${it.name}</div>
-            <div class="item-sub">${r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur'}</div>
+            <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}</div>
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
@@ -1233,6 +1251,16 @@ function renderMine(){
   }
 }
 
+async function withdrawItem(itemId){
+  if(!confirm("Retirer cette annonce ? Elle ne sera plus visible dans Découvrir.")) return;
+  await sb.from('items').update({ status:'retire' }).eq('id', itemId);
+  loadMine();
+}
+
+async function confirmPickup(itemId){
+  await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
+  loadMine();
+}
 
 async function validateReservation(resId, itemId, itemName){
   const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
@@ -1244,7 +1272,6 @@ async function validateReservation(resId, itemId, itemName){
     patch.pickup_lng = currentProfile.lng;
   }
   await sb.from('reservations').update(patch).eq('id', resId);
-  await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
   const verifBadge = currentProfile?.address_verified ? ' (adresse vérifiée par GPS ✓)' : '';
   await sb.from('notifications').insert({
     user_id: res.receiver_id,
