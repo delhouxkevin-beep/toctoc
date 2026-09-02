@@ -36,6 +36,14 @@
   .seg-btn.active{ background:var(--teal); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,0.15); }
 
   .status-row{ display:flex; justify-content:space-between; align-items:center; padding:0 18px 10px; font-size:11px; color:rgba(43,33,64,0.55); font-family:'Space Mono',monospace; }
+  .search-row{ padding:0 18px 8px; }
+  .search-row input{ width:100%; padding:11px 14px; border-radius:100px; border:2px solid var(--ink); font-family:'Inter',sans-serif; font-size:13px; outline:none; }
+  .subcat-row{ display:flex; gap:6px; padding:0 18px 10px; overflow-x:auto; }
+  .subcat-row::-webkit-scrollbar{ display:none; }
+  .subcat-chip{ flex:0 0 auto; padding:7px 13px; border-radius:100px; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink-soft); font-family:'Baloo 2',sans-serif; font-weight:600; font-size:11.5px; cursor:pointer; white-space:nowrap; }
+  .subcat-chip.active{ background:var(--purple); color:#fff; border-color:var(--purple); }
+  .search-results{ padding:0 18px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:100%; }
+  .search-results.hidden{ display:none; }
   .addr-pill{ background:var(--ink); color:#fff; border:2px solid var(--ink); font-family:'Space Mono',monospace; font-size:11px; padding:8px 12px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 0 rgba(0,0,0,0.15); transition:transform .1s; }
   .addr-pill:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
   .publish-btn{ margin:0 18px 14px; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--purple); color:#fff; border:2px solid var(--ink); padding:13px; border-radius:16px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
@@ -216,11 +224,16 @@
       <button class="addr-pill" id="addrPill" onclick="openLocationSheet()">📍 <span id="addrPillLabel">localisation…</span></button>
       <span id="itemCount"></span>
     </div>
+    <div class="search-row" id="searchRow">
+      <input type="text" id="searchInput" placeholder="🔍 Rechercher un objet…" oninput="onSearchInput(this.value)">
+    </div>
+    <div class="subcat-row" id="subcatRow"></div>
 
     <!-- Découvrir -->
     <div id="viewDiscover">
       <button class="publish-btn" id="publishBtnMain" onclick="openPublish()">📷 Publier un objet</button>
       <div class="stack" id="stack"></div>
+      <div class="search-results hidden" id="searchResults"></div>
       <div class="swbar">
         <div class="swbar-label">Durée pour venir chercher</div>
         <div class="swbar-slider">
@@ -697,6 +710,9 @@ function setCategory(c){
   document.getElementById('segObjets').classList.toggle('active', c==='objets');
   document.getElementById('segNourriture').classList.toggle('active', c==='nourriture');
   feedIndex = 0;
+  searchTerm = '';
+  activeSubcat = 'Toutes';
+  document.getElementById('searchInput').value = '';
   loadFeed();
 }
 
@@ -734,7 +750,63 @@ async function loadFeed(){
   const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
   ownerMap = Object.fromEntries((owners||[]).map(o=>[o.id,o]));
 
-  renderStack();
+  renderSubcatRow();
+  applyFilters();
+}
+
+// ================= RECHERCHE & CATÉGORIES =================
+let searchTerm = '';
+let activeSubcat = 'Toutes';
+
+function renderSubcatRow(){
+  const row = document.getElementById('subcatRow');
+  if(category!=='objets'){ row.innerHTML=''; return; }
+  const cats = ['Toutes', ...SUBCATEGORIES];
+  row.innerHTML = cats.map(c=>`<button class="subcat-chip ${activeSubcat===c?'active':''}" onclick="setSubcat('${c}')">${c}</button>`).join('');
+}
+function setSubcat(c){ activeSubcat=c; renderSubcatRow(); applyFilters(); }
+function onSearchInput(v){ searchTerm=v.trim().toLowerCase(); applyFilters(); }
+
+function applyFilters(){
+  const searching = searchTerm.length>0 || activeSubcat!=='Toutes';
+  const stackEl = document.getElementById('stack');
+  const resultsEl = document.getElementById('searchResults');
+  if(!searching){
+    resultsEl.classList.add('hidden');
+    stackEl.classList.remove('hidden');
+    renderStack();
+    return;
+  }
+  stackEl.classList.add('hidden');
+  resultsEl.classList.remove('hidden');
+  const filtered = feedItems.filter(it => {
+    const matchesTerm = !searchTerm || (it.name||'').toLowerCase().includes(searchTerm) || (it.description||'').toLowerCase().includes(searchTerm);
+    const matchesCat = activeSubcat==='Toutes' || it.subcategory===activeSubcat;
+    return matchesTerm && matchesCat;
+  });
+  if(filtered.length===0){
+    resultsEl.innerHTML = `<div class="empty">Aucun résultat.</div>`;
+    return;
+  }
+  resultsEl.innerHTML = filtered.map(it=>{
+    const owner = ownerMap[it.owner_id] || {};
+    const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
+    return `<div class="card">
+      ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
+      <div class="card-body">
+        <div class="card-title">${it.name}</div>
+        <div class="card-meta">📍 ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}</div>
+        <button class="btn btn-teal" style="width:100%; margin-top:8px;" onclick="reserveFromList('${it.id}')">Je réserve</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function reserveFromList(itemId){
+  const item = feedItems.find(i=>i.id===itemId);
+  if(!item) return;
+  await confirmReserveFlow(item);
+  loadFeed();
 }
 
 function renderStack(){
@@ -938,13 +1010,14 @@ async function reserveItem(itemId, durationMinutes){
 }
 
 // ================= PUBLIER =================
+const SUBCATEGORIES = ['Meubles','Électroménager','Électronique & Informatique','Vêtements & Accessoires','Enfants & Bébé','Livres & Médias','Sport & Loisirs','Jardin & Bricolage','Décoration','Autres'];
 let pubPhotoFile = null;
 let pubPhotoPreviewUrl = null;
-let pub = { desc:'', etat:'Bon état', duration:12, pickup:'' };
+let pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
 
 function openPublish(){
   pubPhotoFile = null; pubPhotoPreviewUrl = null;
-  pub = { desc:'', etat:'Bon état', duration:12, pickup:'' };
+  pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
   document.getElementById('publishOverlay').classList.remove('hidden');
   renderPublish();
 }
@@ -957,6 +1030,13 @@ function renderPublish(){
     <input type="file" accept="image/*" capture="environment" id="pubFileInput" onchange="onPickPhoto(event)">
     <label>Description</label>
     <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea>
+    ${category==='objets' ? `
+    <label>Catégorie <span class="field-optional">(obligatoire)</span></label>
+    <select id="pSubcat" onchange="pub.subcategory=this.value">
+      <option value="" ${pub.subcategory===''?'selected':''} disabled>Choisis une catégorie…</option>
+      ${SUBCATEGORIES.map(c=>`<option value="${c}" ${pub.subcategory===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+    ` : ''}
     <label>État</label>
     <div class="chip-row" id="etatChips">
       ${['Neuf','Très bon état','Bon état','Usé'].map(e=>`<button class="chip ${pub.etat===e?'active':''}" onclick="setEtat('${e}')">${e}</button>`).join('')}
@@ -984,6 +1064,10 @@ function setDur(h){ pub.duration=h; renderPublish(); }
 async function submitPublish(){
   if(!currentUser) return;
   const msg = document.getElementById('pubMsg');
+  if(category==='objets' && !pub.subcategory){
+    msg.innerHTML = `<div class="msg err">Choisis une catégorie avant de publier.</div>`;
+    return;
+  }
   msg.innerHTML = `<div class="msg ok">Publication en cours…</div>`;
   let photoUrl = null;
   if(pubPhotoFile){
@@ -997,6 +1081,7 @@ async function submitPublish(){
   const { error } = await sb.from('items').insert({
     owner_id: currentUser.id,
     name, description: pub.desc, etat: pub.etat, category,
+    subcategory: category==='objets' ? pub.subcategory : null,
     photo_url: photoUrl,
     city: currentProfile?.address || currentProfile?.city || 'Lyon',
     lat: userPos?.lat, lng: userPos?.lng,
