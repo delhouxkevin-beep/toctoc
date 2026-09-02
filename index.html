@@ -44,7 +44,7 @@
   .feed{ padding:0 18px; display:flex; flex-direction:column; gap:14px; }
   .card{ border:2px solid var(--ink); border-radius:20px; overflow:hidden; background:var(--paper); position:relative; }
   .card.done{ opacity:0.85; }
-  .done-ribbon{ position:absolute; top:16px; right:-58px; transform:rotate(40deg); background:var(--teal); color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:10.5px; padding:6px 56px; box-shadow:0 3px 8px rgba(0,0,0,0.25); z-index:3; text-align:center; white-space:nowrap; }
+  .done-ribbon{ position:absolute; top:42%; left:-12%; width:124%; transform:rotate(-9deg); background:var(--teal); color:#fff; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px; padding:10px 0; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:3; text-align:center; }
   .card img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#F2ECFF; }
   .card-body{ padding:12px 14px; }
   .card-title{ font-family:'Baloo 2',sans-serif; font-weight:600; font-size:16px; color:var(--ink); }
@@ -213,7 +213,7 @@
       <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')">🍎 Nourriture</button>
     </div>
     <div class="status-row" id="statusRow">
-      <button class="addr-pill" id="addrPill" onclick="switchView('profile')">📍 <span id="addrPillLabel">localisation…</span></button>
+      <button class="addr-pill" id="addrPill" onclick="openLocationSheet()">📍 <span id="addrPillLabel">localisation…</span></button>
       <span id="itemCount"></span>
     </div>
 
@@ -279,6 +279,27 @@
     </div>
   </div>
 
+  <!-- Ma localisation -->
+  <div class="overlay hidden" id="locOverlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">📍 Ma localisation</div>
+        <button class="x-btn" onclick="closeLocationSheet()">✕</button>
+      </div>
+      <p style="font-size:12px; color:rgba(43,33,64,0.6); margin-top:0;">Utilisée pour tes annonces et pour indiquer où venir chercher tes objets.</p>
+      <label>Adresse</label>
+      <input id="locAddress" placeholder="ex: 5 rue de la Paix, 69001 Lyon">
+      <button class="btn-main" onclick="saveLocAddress()">Enregistrer l'adresse</button>
+      <div id="locSaveMsg"></div>
+
+      <div class="section-title" style="margin-top:18px;">Vérification GPS</div>
+      <div id="locVerifiedBox"></div>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="verifyLocGPS()">📍 Vérifier avec ma position GPS</button>
+      <div id="locVerifyMsg"></div>
+      <div id="locVerifyConfirm"></div>
+    </div>
+  </div>
+
   <!-- Story plein écran -->
   <div class="story-overlay hidden" id="storyOverlay">
     <div class="story-bg"></div>
@@ -286,10 +307,8 @@
       <div class="story-bars" id="storyBars"></div>
       <button class="story-close" onclick="closeStory()">✕</button>
     </div>
-    <div class="story-stage">
-      <button class="story-arrow left" id="storyArrowLeft" onclick="storyPrev()">‹</button>
+    <div class="story-stage" id="storyStage">
       <img id="storyImg" src="" alt="">
-      <button class="story-arrow right" id="storyArrowRight" onclick="storyNext()">›</button>
     </div>
     <div class="story-info">
       <div class="story-name" id="storyName"></div>
@@ -371,9 +390,86 @@ function updateAddrPill(){
   if(currentProfile?.address){
     label.textContent = currentProfile.address + (currentProfile.address_verified ? ' ✓' : ' (non vérifiée)');
   }
-  else if(userPos) label.textContent = "position activée — ajoute ton adresse dans Profil";
+  else if(userPos) label.textContent = "position activée — ajoute ton adresse";
   else label.textContent = "position non détectée";
 }
+
+// ================= MA LOCALISATION (overlay dédié) =================
+function openLocationSheet(){
+  document.getElementById('locAddress').value = currentProfile?.address || '';
+  document.getElementById('locSaveMsg').innerHTML = '';
+  document.getElementById('locVerifyMsg').innerHTML = '';
+  document.getElementById('locVerifyConfirm').innerHTML = '';
+  renderLocVerifiedBox();
+  document.getElementById('locOverlay').classList.remove('hidden');
+}
+function closeLocationSheet(){ document.getElementById('locOverlay').classList.add('hidden'); }
+
+function renderLocVerifiedBox(){
+  const box = document.getElementById('locVerifiedBox');
+  box.innerHTML = currentProfile?.address_verified
+    ? `<div class="msg ok">✓ Adresse vérifiée par GPS le ${currentProfile.verified_at ? new Date(currentProfile.verified_at).toLocaleDateString('fr-FR') : ''}
+         <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Voir sur Google Maps</a>
+       </div>`
+    : `<p style="font-size:11.5px; color:rgba(43,33,64,0.6);">Pas encore vérifiée — confirme ta position GPS pour rassurer les autres membres.</p>`;
+}
+
+async function saveLocAddress(){
+  const address = document.getElementById('locAddress').value.trim();
+  const msg = document.getElementById('locSaveMsg');
+  if(!address){ msg.innerHTML = `<div class="msg err">Entre une adresse.</div>`; return; }
+  const addressChanged = address !== (currentProfile?.address||'');
+  const patch = { address };
+  if(addressChanged) patch.address_verified = false;
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  currentProfile = { ...currentProfile, ...patch };
+  msg.innerHTML = `<div class="msg ok">✓ Adresse enregistrée — visible aussi dans Profil → Mes données personnelles.</div>`;
+  updateAddrPill();
+  renderLocVerifiedBox();
+}
+
+let pendingLocGPS = null;
+function verifyLocGPS(){
+  const msg = document.getElementById('locVerifyMsg');
+  const confirmBox = document.getElementById('locVerifyConfirm');
+  confirmBox.innerHTML = '';
+  if(!navigator.geolocation){ msg.innerHTML = `<div class="msg err">Géolocalisation non disponible.</div>`; return; }
+  msg.innerHTML = `<div class="msg ok">Localisation en cours…</div>`;
+  navigator.geolocation.getCurrentPosition(pos => {
+    pendingLocGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    msg.innerHTML = '';
+    confirmBox.innerHTML = `
+      <div class="val-card">
+        📍 Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
+        <a href="https://www.google.com/maps?q=${pendingLocGPS.lat},${pendingLocGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">🗺️ Voir cette position sur Google Maps</a>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-ghost" style="flex:1;" onclick="cancelLocGPS()">Annuler</button>
+          <button class="btn btn-teal" style="flex:1;" onclick="confirmLocGPS()">✓ C'est bien ma position</button>
+        </div>
+      </div>
+    `;
+  }, err => {
+    let reason = "Position indisponible.";
+    if(err.code === 1) reason = "Position refusée. Ouvre les réglages du site (🔒 à côté de l'adresse) → Position → Autoriser.";
+    else if(err.code === 2) reason = "Position introuvable (GPS/Wifi coupé ?).";
+    else if(err.code === 3) reason = "Trop long. Réessaie en extérieur ou près d'une fenêtre.";
+    msg.innerHTML = `<div class="msg err">${reason}</div>`;
+  }, { enableHighAccuracy:false, timeout:25000, maximumAge:60000 });
+}
+async function confirmLocGPS(){
+  if(!pendingLocGPS) return;
+  const patch = { lat: pendingLocGPS.lat, lng: pendingLocGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
+  const msg = document.getElementById('locVerifyMsg');
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  currentProfile = { ...currentProfile, ...patch };
+  pendingLocGPS = null;
+  document.getElementById('locVerifyConfirm').innerHTML = '';
+  updateAddrPill();
+  renderLocVerifiedBox();
+}
+function cancelLocGPS(){ pendingLocGPS = null; document.getElementById('locVerifyConfirm').innerHTML = ''; }
 
 // ================= AUTH =================
 function renderAuth(){
@@ -707,8 +803,17 @@ function swipeAway(card, dir, didReserve){
   card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`;
   card.style.opacity = '0';
   const item = feedItems[feedIndex];
-  if(didReserve) reserveItem(item.id, selectedDuration);
+  if(didReserve) confirmReserveFlow(item);
   setTimeout(()=>{ feedIndex++; renderStack(); }, 300);
+}
+
+async function confirmReserveFlow(item){
+  if(!item || !currentUser) return;
+  const { data: existing } = await sb.from('reservations').select('id').eq('item_id', item.id).eq('receiver_id', currentUser.id);
+  if(existing && existing.length){ alert("Tu as déjà réservé cet objet."); return; }
+  const minutes = await askPickupDelay();
+  if(!minutes) return;
+  await reserveItem(item.id, minutes);
 }
 
 function passTop(){
@@ -726,6 +831,7 @@ function openStory(i){
   storyIndex = i;
   document.getElementById('storyOverlay').classList.remove('hidden');
   renderStory();
+  setupStorySwipe();
 }
 function closeStory(){
   document.getElementById('storyOverlay').classList.add('hidden');
@@ -733,34 +839,86 @@ function closeStory(){
 function storyPrev(){ if(storyIndex>0){ storyIndex--; renderStory(); } }
 function storyNext(){ if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } }
 
+let storySwipeBound = false;
+function setupStorySwipe(){
+  if(storySwipeBound) return;
+  storySwipeBound = true;
+  const stage = document.getElementById('storyStage');
+  const img = document.getElementById('storyImg');
+  let startX=0, dx=0, dragging=false;
+  function onDown(x){ dragging=true; startX=x; img.style.transition='none'; }
+  function onMove(x){
+    if(!dragging) return;
+    dx = x-startX;
+    img.style.transform = `translateX(${dx}px) rotate(${dx/28}deg)`;
+  }
+  function onUp(){
+    if(!dragging) return;
+    dragging=false;
+    img.style.transition='transform .25s ease';
+    if(dx < -70) storyNext();
+    else if(dx > 70) storyPrev();
+    img.style.transform = '';
+  }
+  stage.addEventListener('mousedown', e=>onDown(e.clientX));
+  window.addEventListener('mousemove', e=>onMove(e.clientX));
+  window.addEventListener('mouseup', onUp);
+  stage.addEventListener('touchstart', e=>onDown(e.touches[0].clientX), {passive:true});
+  stage.addEventListener('touchmove', e=>onMove(e.touches[0].clientX), {passive:true});
+  stage.addEventListener('touchend', onUp);
+}
+
 function renderStory(){
   const it = feedItems[storyIndex];
   if(!it) return;
   const owner = ownerMap[it.owner_id] || {};
   const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
   document.getElementById('storyImg').src = it.photo_url || '';
+  document.getElementById('storyImg').style.transform = '';
   document.getElementById('storyName').textContent = it.name;
   document.getElementById('storyMeta').textContent = `📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}${it.pickup_time ? ' · dispo '+it.pickup_time : ''}`;
 
   const bars = document.getElementById('storyBars');
   bars.innerHTML = feedItems.map((_,idx) => `<div class="${idx===storyIndex?'active':''}"></div>`).join('');
 
-  document.getElementById('storyArrowLeft').style.visibility = storyIndex>0 ? 'visible' : 'hidden';
-  document.getElementById('storyArrowRight').style.visibility = storyIndex<feedItems.length-1 ? 'visible' : 'hidden';
-
   const btn = document.getElementById('storyReserveBtn');
   btn.textContent = '🎁 Je réserve cet objet';
   btn.classList.remove('done');
+  btn.disabled = false;
 }
 
 async function storyReserve(){
   const it = feedItems[storyIndex];
-  if(!it) return;
+  if(!it || !currentUser) return;
   const btn = document.getElementById('storyReserveBtn');
+  if(btn.disabled) return; // anti double-clic
+  btn.disabled = true;
+
+  // demande le délai avant de valider
+  const minutes = await askPickupDelay();
+  if(!minutes){ btn.disabled = false; return; }
+
+  // vérifie qu'il n'existe pas déjà une réservation de cet utilisateur sur cet objet
+  const { data: existing } = await sb.from('reservations').select('id').eq('item_id', it.id).eq('receiver_id', currentUser.id);
+  if(existing && existing.length){
+    alert("Tu as déjà réservé cet objet.");
+    btn.disabled = false;
+    return;
+  }
+
   btn.textContent = 'Réservé ✓';
   btn.classList.add('done');
-  await reserveItem(it.id, selectedDuration);
+  await reserveItem(it.id, minutes);
   setTimeout(()=>{ closeStory(); loadFeed(); }, 600);
+}
+
+function askPickupDelay(){
+  return new Promise(resolve => {
+    const choice = prompt("Dans combien de temps viens-tu chercher l'objet ? (en minutes, ex: 30)", "30");
+    if(choice===null){ resolve(null); return; }
+    const n = parseInt(choice);
+    resolve(n>0 ? n : null);
+  });
 }
 
 async function reserveItem(itemId, durationMinutes){
