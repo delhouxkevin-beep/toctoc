@@ -35,7 +35,13 @@
   .seg-btn{ flex:1; border:none; background:transparent; padding:9px 0; border-radius:100px; font-family:'Baloo 2',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer; transition:all .15s; }
   .seg-btn.active{ background:var(--teal); color:#fff; box-shadow:0 3px 0 rgba(0,0,0,0.15); }
 
-  .status-row{ display:flex; justify-content:space-between; align-items:center; padding:0 18px 10px; font-size:11px; color:rgba(43,33,64,0.55); font-family:'Space Mono',monospace; }
+  .status-row{ display:flex; align-items:center; gap:8px; padding:0 18px 10px; font-size:11px; color:rgba(43,33,64,0.55); font-family:'Space Mono',monospace; }
+  .status-row #itemCount{ margin-left:auto; }
+  .radius-pill{ background:var(--paper); color:var(--ink); border:2px solid var(--ink); font-family:'Space Mono',monospace; font-size:11px; padding:7px 11px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; }
+  .radius-panel{ padding:0 18px 10px; display:flex; gap:6px; flex-wrap:wrap; }
+  .radius-panel.hidden{ display:none; }
+  .radius-chip{ padding:6px 12px; border-radius:100px; border:1.5px solid var(--ink); background:var(--paper); color:var(--ink-soft); font-family:'Baloo 2',sans-serif; font-weight:600; font-size:11.5px; cursor:pointer; }
+  .radius-chip.active{ background:var(--purple); color:#fff; border-color:var(--purple); }
   .search-row{ padding:0 18px 8px; }
   .search-row input{ width:100%; padding:11px 14px; border-radius:100px; border:2px solid var(--ink); font-family:'Inter',sans-serif; font-size:13px; outline:none; }
   .subcat-row{ display:flex; gap:6px; padding:0 18px 10px; overflow-x:auto; }
@@ -244,8 +250,10 @@
     </div>
     <div class="status-row" id="statusRow">
       <button class="addr-pill" id="addrPill" onclick="openLocationSheet()">📍 <span id="addrPillLabel">localisation…</span></button>
+      <button class="radius-pill" id="radiusPill" onclick="toggleRadiusPanel()">🔎 <span id="radiusPillLabel">20 km</span></button>
       <span id="itemCount"></span>
     </div>
+    <div class="radius-panel hidden" id="radiusPanel"></div>
     <div class="search-row" id="searchRow">
       <input type="text" id="searchInput" placeholder="🔍 Rechercher un objet…" oninput="onSearchInput(this.value)">
     </div>
@@ -498,15 +506,34 @@ function verifyLocGPS(){
     msg.innerHTML = `<div class="msg err">${reason}</div>`;
   }, { enableHighAccuracy:false, timeout:25000, maximumAge:60000 });
 }
+async function reverseGeocode(lat, lng){
+  try{
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+      headers: { 'Accept-Language': 'fr' }
+    });
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data.display_name || null;
+  } catch(e){
+    return null;
+  }
+}
+
 async function confirmLocGPS(){
   if(!pendingLocGPS) return;
-  const patch = { lat: pendingLocGPS.lat, lng: pendingLocGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
-  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   const msg = document.getElementById('locVerifyMsg');
+  msg.innerHTML = `<div class="msg ok">Conversion en adresse…</div>`;
+  const patch = { lat: pendingLocGPS.lat, lng: pendingLocGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
+  const foundAddress = await reverseGeocode(pendingLocGPS.lat, pendingLocGPS.lng);
+  if(foundAddress) patch.address = foundAddress;
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
   currentProfile = { ...currentProfile, ...patch };
   pendingLocGPS = null;
   document.getElementById('locVerifyConfirm').innerHTML = '';
+  const addrInput = document.getElementById('locAddress');
+  if(addrInput) addrInput.value = currentProfile.address || '';
+  msg.innerHTML = foundAddress ? `<div class="msg ok">✓ Adresse mise à jour automatiquement.</div>` : '';
   updateAddrPill();
   renderLocVerifiedBox();
 }
@@ -770,7 +797,16 @@ async function loadFeed(){
     .order('created_at', { ascending:false });
   if(error){ stack.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
 
-  feedItems = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id));
+  let all = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id));
+
+  if(userPos && radiusKm !== 'all'){
+    all = all.filter(it => {
+      const d = haversine(userPos.lat, userPos.lng, it.lat, it.lng);
+      return d==null || d <= radiusKm; // garde les objets sans coordonnées plutôt que de les cacher
+    });
+  }
+
+  feedItems = all;
   feedIndex = 0;
   document.getElementById('itemCount').textContent = feedItems.length + " annonce(s)";
 
@@ -782,7 +818,30 @@ async function loadFeed(){
   applyFilters();
 }
 
-// ================= RECHERCHE & CATÉGORIES =================
+// ================= RAYON DE RECHERCHE =================
+let radiusKm = 20;
+const RADIUS_OPTIONS = [1,3,5,10,20,'all'];
+
+function toggleRadiusPanel(){
+  const panel = document.getElementById('radiusPanel');
+  const opening = panel.classList.contains('hidden');
+  if(opening) renderRadiusPanel();
+  panel.classList.toggle('hidden');
+}
+function renderRadiusPanel(){
+  const panel = document.getElementById('radiusPanel');
+  panel.innerHTML = RADIUS_OPTIONS.map(km =>
+    `<button class="radius-chip ${radiusKm===km?'active':''}" onclick="setRadiusKm(${km==='all'?"'all'":km})">${km==='all' ? 'Tous' : km+' km'}</button>`
+  ).join('');
+}
+function setRadiusKm(km){
+  radiusKm = km;
+  document.getElementById('radiusPillLabel').textContent = km==='all' ? 'Tous' : km+' km';
+  document.getElementById('radiusPanel').classList.add('hidden');
+  loadFeed();
+}
+
+
 let searchTerm = '';
 let activeSubcat = 'Toutes';
 
@@ -1167,22 +1226,20 @@ function renderMine(){
   const { myItems, incomingRes, myRes, resItemMap } = mineDataCache;
 
   if(mineTab === 'annonces'){
-    if(myItems.length===0){
+    const activeItems = myItems.filter(it => it.status !== 'attribue');
+    if(activeItems.length===0){
       el.innerHTML = `<div class="empty">Tu n'as encore rien publié.</div>`;
       return;
     }
-    el.innerHTML = myItems.map(it => {
+    el.innerHTML = activeItems.map(it => {
       const res = incomingRes.find(r=>r.item_id===it.id);
       let action = '';
       let statusLabel, statusClass;
-      let done = it.status === 'attribue';
 
-      if(done){
-        statusLabel = 'HORS LIGNE'; statusClass = 'offline';
-      } else if(res && res.donor_validated){
+      if(res && res.donor_validated){
         statusLabel = 'À RÉCUPÉRER'; statusClass = 'pending';
         action = `<div class="val-card">📍 Adresse envoyée, en attente que la personne vienne chercher l'objet.<br>
-          <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}')">✓ Confirmer que l'objet a été récupéré</button>
+          <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}','${it.category}')">✓ Confirmer que l'objet a été récupéré</button>
         </div>`;
       } else if(res && !res.donor_validated){
         statusLabel = 'RÉSERVÉ'; statusClass = 'pending';
@@ -1198,7 +1255,6 @@ function renderMine(){
 
       const thumb = `<div class="thumb-wrap">
         ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty">📦</div>`}
-        ${done ? `<div class="mini-ribbon"></div>` : ''}
       </div>`;
 
       return `
@@ -1206,12 +1262,11 @@ function renderMine(){
           ${thumb}
           <div class="info">
             <div class="item-name">${it.name}</div>
-            <div class="item-sub">${done ? "✓ Objet remis" : (currentProfile?.address || 'Adresse non renseignée')}</div>
+            <div class="item-sub">${currentProfile?.address || 'Adresse non renseignée'}</div>
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
         <div class="item-extra">
-          ${done ? `<div class="msg ok">✓ ${it.category==='nourriture' ? "Bien joué, tu as aidé quelqu'un" : "Bien joué, tu t'en es débarrassé"} — visible aussi dans "Mes réservations" côté receveur.</div>` : ''}
           ${action}
         </div>
       `;
@@ -1257,8 +1312,9 @@ async function withdrawItem(itemId){
   loadMine();
 }
 
-async function confirmPickup(itemId){
+async function confirmPickup(itemId, category){
   await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
+  alert(category==='nourriture' ? "🎉 Bien joué, tu as aidé quelqu'un !" : "🎉 Bien joué, tu t'en es débarrassé !");
   loadMine();
 }
 
@@ -1417,9 +1473,12 @@ function verifyAddressGPS(){
 
 async function confirmGPSVerify(){
   if(!pendingGPS) return;
-  const patch = { lat: pendingGPS.lat, lng: pendingGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
-  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   const msg = document.getElementById('verifyMsg');
+  msg.innerHTML = `<div class="msg ok">Conversion en adresse…</div>`;
+  const patch = { lat: pendingGPS.lat, lng: pendingGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
+  const foundAddress = await reverseGeocode(pendingGPS.lat, pendingGPS.lng);
+  if(foundAddress) patch.address = foundAddress;
+  const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
   currentProfile = { ...currentProfile, ...patch };
   pendingGPS = null;
