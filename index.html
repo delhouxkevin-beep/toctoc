@@ -84,7 +84,7 @@
   .subcat-chip.active{ background:var(--purple); color:#fff; border-color:var(--purple); }
   .search-results{ padding:0 18px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:100%; }
   .search-results.hidden{ display:none; }
-  .addr-pill{ background:var(--ink); color:#fff; border:1px solid var(--color-border-default); font-family:'Space Mono',monospace; font-size:11px; padding:8px 12px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 0 rgba(0,0,0,0.15); transition:transform .1s; }
+  .addr-pill{ background:var(--ink); color:#fff; border:1px solid var(--color-border-default); font-family:'Space Mono',monospace; font-size:11px; padding:8px 12px; border-radius:100px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 3px 0 rgba(0,0,0,0.15); transition:transform .1s; max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .addr-pill:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
   .publish-btn{ margin:0 18px 14px; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--purple); color:#fff; border:1px solid var(--color-border-default); padding:13px; border-radius:16px; font-family:'Work Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
   .publish-btn:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
@@ -415,8 +415,14 @@
         <button class="x-btn" onclick="closeLocationSheet()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <p style="font-size:12px; color:rgba(43,33,64,0.6); margin-top:0;">Utilisée pour tes annonces et pour indiquer où venir chercher tes objets.</p>
-      <label>Adresse</label>
-      <input id="locAddress" placeholder="ex: 5 rue de la Paix, 69001 Lyon">
+      <label>Rue et numéro</label>
+      <input id="locStreet" placeholder="ex: 5 rue de la Paix">
+      <label>Code postal</label>
+      <input id="locPostal" placeholder="ex: 69001">
+      <label>Ville</label>
+      <input id="locCity" placeholder="ex: Lyon">
+      <label>Pays</label>
+      <input id="locCountry" placeholder="ex: France">
       <button class="btn-main" onclick="saveLocAddress()">Enregistrer l'adresse</button>
       <div id="locSaveMsg"></div>
 
@@ -514,6 +520,11 @@ function haversine(lat1, lng1, lat2, lng2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 function fmtKm(km){ return km==null ? "distance inconnue" : (km<1 ? Math.round(km*1000)+" m" : km.toFixed(1)+" km"); }
+function fmtItemLoc(it){
+  if(it.postal_code && it.city) return `${it.postal_code} ${it.city}`;
+  if(it.city && !it.city.includes(',')) return it.city; // ancien format "city" = adresse complète -> ignoré
+  return '';
+}
 
 function getGeo(){
   updateAddrPill();
@@ -537,7 +548,10 @@ function getGeo(){
 function updateAddrPill(){
   const label = document.getElementById('addrPillLabel');
   if(!label) return;
-  if(currentProfile?.address){
+  if(currentProfile?.postal_code && currentProfile?.city){
+    label.textContent = `${currentProfile.postal_code} ${currentProfile.city}` + (currentProfile.address_verified ? ' ✓' : ' (non vérifiée)');
+  }
+  else if(currentProfile?.address){
     label.textContent = currentProfile.address + (currentProfile.address_verified ? ' ✓' : ' (non vérifiée)');
   }
   else if(userPos) label.textContent = "position activée — ajoute ton adresse";
@@ -546,7 +560,10 @@ function updateAddrPill(){
 
 // ================= MA LOCALISATION (overlay dédié) =================
 function openLocationSheet(){
-  document.getElementById('locAddress').value = currentProfile?.address || '';
+  document.getElementById('locStreet').value = currentProfile?.street || '';
+  document.getElementById('locPostal').value = currentProfile?.postal_code || '';
+  document.getElementById('locCity').value = currentProfile?.city || '';
+  document.getElementById('locCountry').value = currentProfile?.country || '';
   document.getElementById('locSaveMsg').innerHTML = '';
   document.getElementById('locVerifyMsg').innerHTML = '';
   document.getElementById('locVerifyConfirm').innerHTML = '';
@@ -565,12 +582,15 @@ function renderLocVerifiedBox(){
 }
 
 async function saveLocAddress(){
-  const address = document.getElementById('locAddress').value.trim();
+  const street = document.getElementById('locStreet').value.trim();
+  const postal_code = document.getElementById('locPostal').value.trim();
+  const city = document.getElementById('locCity').value.trim();
+  const country = document.getElementById('locCountry').value.trim();
   const msg = document.getElementById('locSaveMsg');
-  if(!address){ msg.innerHTML = `<div class="msg err">Entre une adresse.</div>`; return; }
-  if(!address.includes(',')){ msg.innerHTML = `<div class="msg err">Précise aussi la ville, ex : "5 rue de la Paix, 69001 Lyon".</div>`; return; }
+  if(!street || !postal_code || !city || !country){ msg.innerHTML = `<div class="msg err">Remplis les 4 champs (rue, code postal, ville, pays).</div>`; return; }
+  const address = composeAddress(street, postal_code, city, country);
   const addressChanged = address !== (currentProfile?.address||'');
-  const patch = { address };
+  const patch = { street, postal_code, city, country, address };
   if(addressChanged) patch.address_verified = false;
   const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
@@ -615,10 +635,23 @@ async function reverseGeocode(lat, lng){
     });
     if(!res.ok) return null;
     const data = await res.json();
-    return data.display_name || null;
+    if(!data.display_name) return null;
+    const a = data.address || {};
+    const street = [a.road, a.house_number].filter(Boolean).join(' ') || a.road || '';
+    const city = a.city || a.town || a.village || a.municipality || '';
+    return {
+      display_name: data.display_name,
+      street,
+      postal_code: a.postcode || '',
+      city,
+      country: a.country || ''
+    };
   } catch(e){
     return null;
   }
+}
+function composeAddress(street, postal, city, country){
+  return [street, [postal, city].filter(Boolean).join(' '), country].filter(Boolean).join(', ');
 }
 
 async function confirmLocGPS(){
@@ -626,16 +659,24 @@ async function confirmLocGPS(){
   const msg = document.getElementById('locVerifyMsg');
   msg.innerHTML = `<div class="msg ok">Conversion en adresse…</div>`;
   const patch = { lat: pendingLocGPS.lat, lng: pendingLocGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
-  const foundAddress = await reverseGeocode(pendingLocGPS.lat, pendingLocGPS.lng);
-  if(foundAddress) patch.address = foundAddress;
+  const found = await reverseGeocode(pendingLocGPS.lat, pendingLocGPS.lng);
+  if(found){
+    patch.street = found.street; patch.postal_code = found.postal_code; patch.city = found.city; patch.country = found.country;
+    patch.address = composeAddress(found.street, found.postal_code, found.city, found.country) || found.display_name;
+  }
   const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
   currentProfile = { ...currentProfile, ...patch };
   pendingLocGPS = null;
   document.getElementById('locVerifyConfirm').innerHTML = '';
-  const addrInput = document.getElementById('locAddress');
-  if(addrInput) addrInput.value = currentProfile.address || '';
-  msg.innerHTML = foundAddress ? `<div class="msg ok">✓ Adresse mise à jour automatiquement.</div>` : '';
+  const streetInput = document.getElementById('locStreet');
+  if(streetInput){
+    document.getElementById('locStreet').value = currentProfile.street || '';
+    document.getElementById('locPostal').value = currentProfile.postal_code || '';
+    document.getElementById('locCity').value = currentProfile.city || '';
+    document.getElementById('locCountry').value = currentProfile.country || '';
+  }
+  msg.innerHTML = found ? `<div class="msg ok">✓ Adresse mise à jour automatiquement.</div>` : '';
   updateAddrPill();
   renderLocVerifiedBox();
 }
@@ -772,6 +813,7 @@ function positionTourBubble(selector){
     return;
   }
 
+  target.scrollIntoView({ block:'center', behavior:'auto' });
   const r = target.getBoundingClientRect();
   spot.classList.remove('hidden');
   spot.style.left = (r.left-6)+'px';
@@ -1030,7 +1072,7 @@ function renderSearchResults(list, isBroad){
       ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
       <div class="card-body">
         <div class="card-title">${it.name}</div>
-        <div class="card-meta">${ICON.pin} ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}${it.category==='troc' ? ' · '+ICON.swap+' Troc' : ''}</div>
+        <div class="card-meta">${ICON.pin} ${owner.name||'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}${it.subcategory ? ' · '+it.subcategory : ''}${it.category==='troc' ? ' · '+ICON.swap+' Troc' : ''}</div>
         <button class="btn btn-teal" style="width:100%; margin-top:8px;" onclick="reserveFromList('${it.id}')">Je réserve</button>
       </div>
     </div>`;
@@ -1063,7 +1105,7 @@ function renderStack(){
     el.innerHTML = `
       <div class="swart">
         ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">${ICON.box}</div>`}
-        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}</div>
+        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
         <div class="sw-free">GRATUIT</div>
         <div class="sw-hint like">JE RÉSERVE</div>
         <div class="sw-hint pass">JE PASSE</div>
@@ -1229,7 +1271,7 @@ function renderStory(){
   document.getElementById('storyImg').src = it.photo_url || '';
   document.getElementById('storyImg').style.transform = '';
   document.getElementById('storyName').textContent = it.name;
-  document.getElementById('storyMeta').textContent = `📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}${it.pickup_time ? ' · dispo '+it.pickup_time : ''}`;
+  document.getElementById('storyMeta').textContent = `📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}${it.pickup_time ? ' · dispo '+it.pickup_time : ''}`;
 
   // Cartes fantômes : aperçu des objets suivants, pour montrer qu'il y en a d'autres
   const next1 = feedItems[storyIndex+1];
@@ -1387,7 +1429,8 @@ async function submitPublish(){
     name, description: pub.desc, etat: pub.etat, category,
     subcategory: category==='objets' ? pub.subcategory : null,
     photo_url: photoUrl,
-    city: currentProfile.address,
+    city: currentProfile.city,
+    postal_code: currentProfile.postal_code,
     lat: currentProfile.lat, lng: currentProfile.lng,
     pickup_time: pub.pickup, duration_hours: pub.duration,
     status: 'disponible'
@@ -1673,8 +1716,14 @@ function renderProfile(){
     <input id="prName" value="${currentProfile?.name||''}">
     <label>Téléphone</label>
     <input id="prPhone" value="${currentProfile?.phone||''}">
-    <label>Adresse</label>
-    <input id="prAddress" placeholder="ex: 5 rue de la Paix, 69001 Lyon" value="${currentProfile?.address||''}">
+    <label>Rue et numéro</label>
+    <input id="prStreet" placeholder="ex: 5 rue de la Paix" value="${currentProfile?.street||''}">
+    <label>Code postal</label>
+    <input id="prPostal" placeholder="ex: 69001" value="${currentProfile?.postal_code||''}">
+    <label>Ville</label>
+    <input id="prCity" placeholder="ex: Lyon" value="${currentProfile?.city||''}">
+    <label>Pays</label>
+    <input id="prCountry" placeholder="ex: France" value="${currentProfile?.country||''}">
     <button class="btn-main" onclick="saveProfile()">Enregistrer</button>
     <div id="profMsg"></div>
 
@@ -1694,12 +1743,18 @@ function renderProfile(){
 async function saveProfile(){
   const name = document.getElementById('prName').value.trim();
   const phone = document.getElementById('prPhone').value.trim();
-  const address = document.getElementById('prAddress').value.trim();
+  const street = document.getElementById('prStreet').value.trim();
+  const postal_code = document.getElementById('prPostal').value.trim();
+  const city = document.getElementById('prCity').value.trim();
+  const country = document.getElementById('prCountry').value.trim();
   const msg0 = document.getElementById('profMsg');
-  if(address && !address.includes(',')){ msg0.innerHTML = `<div class="msg err">Précise aussi la ville dans l'adresse, ex : "5 rue de la Paix, 69001 Lyon".</div>`; return; }
-  // si l'adresse texte change, on redemande une vérification GPS
+  if(street || postal_code || city || country){
+    if(!street || !postal_code || !city || !country){ msg0.innerHTML = `<div class="msg err">Remplis les 4 champs d'adresse (rue, code postal, ville, pays), ou laisse-les tous vides.</div>`; return; }
+  }
+  const address = composeAddress(street, postal_code, city, country);
+  // si l'adresse change, on redemande une vérification GPS
   const addressChanged = address !== (currentProfile?.address||'');
-  const patch = { name, phone, address };
+  const patch = { name, phone, street, postal_code, city, country, address };
   if(addressChanged) patch.address_verified = false;
   const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   const msg = document.getElementById('profMsg');
@@ -1747,8 +1802,11 @@ async function confirmGPSVerify(){
   const msg = document.getElementById('verifyMsg');
   msg.innerHTML = `<div class="msg ok">Conversion en adresse…</div>`;
   const patch = { lat: pendingGPS.lat, lng: pendingGPS.lng, address_verified:true, verified_at: new Date().toISOString() };
-  const foundAddress = await reverseGeocode(pendingGPS.lat, pendingGPS.lng);
-  if(foundAddress) patch.address = foundAddress;
+  const found = await reverseGeocode(pendingGPS.lat, pendingGPS.lng);
+  if(found){
+    patch.street = found.street; patch.postal_code = found.postal_code; patch.city = found.city; patch.country = found.country;
+    patch.address = composeAddress(found.street, found.postal_code, found.city, found.country) || found.display_name;
+  }
   const { error } = await sb.from('profiles').update(patch).eq('id', currentUser.id);
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
   currentProfile = { ...currentProfile, ...patch };
