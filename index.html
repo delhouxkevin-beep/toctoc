@@ -98,6 +98,7 @@
   .swcard{ position:absolute; inset:0; background:var(--paper); border:2px solid var(--ink); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; transition:transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s; cursor:grab; user-select:none; }
   .swcard:active{ cursor:grabbing; }
   .swcard.behind{ transform:scale(0.95) translateY(12px); z-index:1; }
+  .swcard.behind2{ transform:scale(0.90) translateY(24px); z-index:0; opacity:0.85; }
   .swcard.front{ z-index:3; }
   .swart{ flex:1; position:relative; background:linear-gradient(160deg,#F2ECFF,var(--purple)); }
   .swart img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
@@ -138,7 +139,7 @@
   .story-overlay{ position:fixed; inset:0; z-index:300; overflow:hidden; }
 
   /* Visite guidée — bulles dynamiques */
-  .tour-scrim{ position:fixed; inset:0; z-index:400; background:rgba(20,14,36,0.45); }
+  .tour-scrim{ position:fixed; inset:0; z-index:400; background:rgba(20,14,36,0.45); pointer-events:none; }
   .tour-scrim.hidden{ display:none; }
   .tour-spot{ position:fixed; z-index:401; border-radius:18px; box-shadow:0 0 0 6px rgba(255,201,60,0.35), 0 0 0 2000px rgba(20,14,36,0.55); pointer-events:none; transition:all .35s cubic-bezier(.2,.8,.3,1); animation:tourPulse 1.4s ease-in-out infinite; }
   .tour-spot.hidden{ display:none; }
@@ -322,6 +323,26 @@
     </div>
   </div>
 
+  <!-- Délai avant récupération -->
+  <div class="overlay hidden" id="delayOverlay" style="z-index:350;">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">⏱️ Dans combien de temps ?</div>
+        <button class="x-btn" onclick="closeDelaySheet(null)">✕</button>
+      </div>
+      <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;">Dans combien de temps viens-tu chercher l'objet ?</p>
+      <div class="chip-row">
+        <button class="chip" onclick="closeDelaySheet(15)">15 min</button>
+        <button class="chip" onclick="closeDelaySheet(30)">30 min</button>
+        <button class="chip" onclick="closeDelaySheet(60)">1h</button>
+        <button class="chip" onclick="closeDelaySheet(120)">2h</button>
+      </div>
+      <label>Ou un autre délai (minutes)</label>
+      <input type="number" id="delayCustomInput" placeholder="ex: 45" min="1">
+      <button class="btn-main" onclick="closeDelaySheet(parseInt(document.getElementById('delayCustomInput').value))">Valider</button>
+    </div>
+  </div>
+
   <!-- Visionneuse photo -->
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImgLightbox()">
     <button class="img-lightbox-close" onclick="closeImgLightbox()">✕</button>
@@ -369,7 +390,7 @@
 </div>
 
 <!-- Visite guidée -->
-<div class="tour-scrim hidden" id="tourScrim" onclick="tourNext()"></div>
+<div class="tour-scrim hidden" id="tourScrim"></div>
 <div class="tour-spot hidden" id="tourSpot"></div>
 <div class="tour-bubble hidden arrow-top" id="tourCard" onclick="event.stopPropagation()">
   <div class="tour-dots" id="tourDots"></div>
@@ -467,6 +488,7 @@ async function saveLocAddress(){
   const address = document.getElementById('locAddress').value.trim();
   const msg = document.getElementById('locSaveMsg');
   if(!address){ msg.innerHTML = `<div class="msg err">Entre une adresse.</div>`; return; }
+  if(!address.includes(',')){ msg.innerHTML = `<div class="msg err">Précise aussi la ville, ex : "5 rue de la Paix, 69001 Lyon".</div>`; return; }
   const addressChanged = address !== (currentProfile?.address||'');
   const patch = { address };
   if(addressChanged) patch.address_verified = false;
@@ -903,14 +925,14 @@ function renderStack(){
     stack.innerHTML = `<div class="empty">Plus rien pour l'instant dans cette catégorie.<br>Reviens plus tard ou change de rayon.</div>`;
     return;
   }
-  [1,0].forEach(offset=>{
+  [2,1,0].forEach(offset=>{
     const i = feedIndex + offset;
     if(i >= feedItems.length) return;
     const it = feedItems[i];
     const owner = ownerMap[it.owner_id] || {};
     const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
     const el = document.createElement('div');
-    el.className = 'swcard ' + (offset===0 ? 'front' : 'behind');
+    el.className = 'swcard ' + (offset===0 ? 'front' : offset===1 ? 'behind' : 'behind2');
     el.innerHTML = `
       <div class="swart">
         ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">📦</div>`}
@@ -946,8 +968,8 @@ function addDrag(card){
     if(!dragging) return;
     dragging=false;
     card.style.transition='transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s';
-    if(dx > 90) swipeAway(card, 1, true);
-    else if(dx < -90) swipeAway(card, -1, false);
+    if(dx > 90) handleReserveIntent(card);
+    else if(dx < -90) swipeAway(card, -1);
     else { card.style.transform=''; likeHint.style.opacity=0; passHint.style.opacity=0; }
   }
   card.addEventListener('mousedown', e=>onDown(e.clientX));
@@ -958,30 +980,41 @@ function addDrag(card){
   card.addEventListener('touchend', onUp);
 }
 
-function swipeAway(card, dir, didReserve){
+function swipeAway(card, dir){
   card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`;
   card.style.opacity = '0';
-  const item = feedItems[feedIndex];
-  if(didReserve) confirmReserveFlow(item);
   setTimeout(()=>{ feedIndex++; renderStack(); }, 300);
 }
 
+function resetCardPosition(card){
+  if(!card) return;
+  card.style.transition = 'transform .3s ease';
+  card.style.transform = '';
+}
+
+async function handleReserveIntent(card){
+  const item = feedItems[feedIndex];
+  const ok = await confirmReserveFlow(item);
+  if(ok) swipeAway(card, 1);
+  else resetCardPosition(card);
+}
+
 async function confirmReserveFlow(item){
-  if(!item || !currentUser) return;
+  if(!item || !currentUser) return false;
   const { data: existing } = await sb.from('reservations').select('id').eq('item_id', item.id).eq('receiver_id', currentUser.id);
-  if(existing && existing.length){ alert("Tu as déjà réservé cet objet."); return; }
+  if(existing && existing.length){ alert("Tu as déjà réservé cet objet."); return false; }
   const minutes = await askPickupDelay();
-  if(!minutes) return;
-  await reserveItem(item.id, minutes);
+  if(!minutes) return false;
+  return await reserveItem(item.id, minutes);
 }
 
 function passTop(){
   const card = document.querySelector('#stack .swcard.front');
-  if(card) swipeAway(card, -1, false);
+  if(card) swipeAway(card, -1);
 }
-function reserveTop(){
+async function reserveTop(){
   const card = document.querySelector('#stack .swcard.front');
-  if(card) swipeAway(card, 1, true);
+  if(card) await handleReserveIntent(card);
 }
 
 // ================= STORY PLEIN ÉCRAN =================
@@ -1065,27 +1098,35 @@ async function storyReserve(){
     return;
   }
 
+  const ok = await reserveItem(it.id, minutes);
+  if(!ok){ btn.disabled = false; return; }
   btn.textContent = 'Réservé ✓';
   btn.classList.add('done');
-  await reserveItem(it.id, minutes);
   setTimeout(()=>{ closeStory(); loadFeed(); }, 600);
 }
 
+let delayResolver = null;
 function askPickupDelay(){
   return new Promise(resolve => {
-    const choice = prompt("Dans combien de temps viens-tu chercher l'objet ? (en minutes, ex: 30)", "30");
-    if(choice===null){ resolve(null); return; }
-    const n = parseInt(choice);
-    resolve(n>0 ? n : null);
+    delayResolver = resolve;
+    document.getElementById('delayCustomInput').value = '';
+    document.getElementById('delayOverlay').classList.remove('hidden');
   });
+}
+function closeDelaySheet(minutes){
+  document.getElementById('delayOverlay').classList.add('hidden');
+  if(delayResolver){
+    delayResolver(minutes>0 ? minutes : null);
+    delayResolver = null;
+  }
 }
 
 async function reserveItem(itemId, durationMinutes){
-  if(!currentUser) return;
+  if(!currentUser) return false;
   const expiresAt = new Date(Date.now() + durationMinutes*60*1000).toISOString();
   const { data: itemRow } = await sb.from('items').select('owner_id,name').eq('id', itemId).single();
   const { error: e1 } = await sb.from('reservations').insert({ item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt });
-  if(e1){ alert("Erreur : " + e1.message); return; }
+  if(e1){ alert("La réservation a échoué : " + e1.message + "\n\nL'objet reste disponible, réessaie."); return false; }
   await sb.from('items').update({ status:'reserve' }).eq('id', itemId);
   if(itemRow){
     await sb.from('notifications').insert({
@@ -1094,6 +1135,7 @@ async function reserveItem(itemId, durationMinutes){
       message: `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.`
     });
   }
+  return true;
 }
 
 // ================= PUBLIER =================
@@ -1414,7 +1456,7 @@ function renderProfile(){
     <label>Téléphone</label>
     <input id="prPhone" value="${currentProfile?.phone||''}">
     <label>Adresse</label>
-    <input id="prAddress" value="${currentProfile?.address||''}">
+    <input id="prAddress" placeholder="ex: 5 rue de la Paix, 69001 Lyon" value="${currentProfile?.address||''}">
     <button class="btn-main" onclick="saveProfile()">Enregistrer</button>
     <div id="profMsg"></div>
 
@@ -1435,6 +1477,8 @@ async function saveProfile(){
   const name = document.getElementById('prName').value.trim();
   const phone = document.getElementById('prPhone').value.trim();
   const address = document.getElementById('prAddress').value.trim();
+  const msg0 = document.getElementById('profMsg');
+  if(address && !address.includes(',')){ msg0.innerHTML = `<div class="msg err">Précise aussi la ville dans l'adresse, ex : "5 rue de la Paix, 69001 Lyon".</div>`; return; }
   // si l'adresse texte change, on redemande une vérification GPS
   const addressChanged = address !== (currentProfile?.address||'');
   const patch = { name, phone, address };
