@@ -1192,13 +1192,15 @@ async function reserveFromList(itemId){
 function renderStack(){
   const stack = document.getElementById('stack');
   stack.innerHTML = '';
-  if(feedIndex >= feedItems.length){
+  if(feedItems.length === 0){
     stack.innerHTML = `<div class="empty">Plus rien pour l'instant dans cette catégorie.<br>Reviens plus tard ou change de rayon.</div>`;
     return;
   }
+  if(feedIndex >= feedItems.length){
+    feedIndex = 0; // on reboucle : toujours des annonces à voir, même si ce sont les mêmes
+  }
   [2,1,0].forEach(offset=>{
-    const i = feedIndex + offset;
-    if(i >= feedItems.length) return;
+    const i = (feedIndex + offset) % feedItems.length;
     const it = feedItems[i];
     const owner = ownerMap[it.owner_id] || {};
     const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
@@ -1361,8 +1363,8 @@ function openStory(i){
 function closeStory(){
   document.getElementById('storyOverlay').classList.add('hidden');
 }
-function storyPrev(){ if(storyIndex>0){ storyIndex--; renderStory(); } }
-function storyNext(){ if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } }
+function storyPrev(){ if(storyIndex>0){ storyIndex--; renderStory(); } else if(feedItems.length>1){ storyIndex = feedItems.length-1; renderStory(); } }
+function storyNext(){ if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } else if(feedItems.length>1){ storyIndex = 0; renderStory(); } }
 
 let storySwipeBound = false;
 function setupStorySwipe(){
@@ -1405,8 +1407,8 @@ function renderStory(){
   document.getElementById('storyCountdown').innerHTML = `⏳ <span class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}"></span> avant que l'annonce ne soit retirée`;
 
   // Cartes fantômes : aperçu des objets suivants, pour montrer qu'il y en a d'autres
-  const next1 = feedItems[storyIndex+1];
-  const next2 = feedItems[storyIndex+2];
+  const next1 = feedItems.length > 1 ? feedItems[(storyIndex+1) % feedItems.length] : null;
+  const next2 = feedItems.length > 2 ? feedItems[(storyIndex+2) % feedItems.length] : null;
   const g1 = document.getElementById('storyGhost1');
   const g2 = document.getElementById('storyGhost2');
   if(next1 && next1.photo_url){ g1.src = next1.photo_url; g1.classList.remove('no-item'); } else { g1.classList.add('no-item'); }
@@ -1464,9 +1466,8 @@ function submitCustomDelay(){
 
 async function reserveItem(itemId, durationMinutes, offeredItemId){
   if(!currentUser) return false;
-  const expiresAt = new Date(Date.now() + durationMinutes*60*1000).toISOString();
   const { data: itemRow } = await sb.from('items').select('owner_id,name').eq('id', itemId).single();
-  const insertPayload = { item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt };
+  const insertPayload = { item_id: itemId, receiver_id: currentUser.id, pickup_minutes: durationMinutes };
   if(offeredItemId) insertPayload.offered_item_id = offeredItemId;
   const { error: e1 } = await sb.from('reservations').insert(insertPayload);
   if(e1){ await showAppAlert("La réservation a échoué : " + e1.message + "\n\nL'objet reste disponible, réessaie."); return false; }
@@ -1789,7 +1790,9 @@ async function validateReservation(resId, itemId, itemName){
   const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
   if(!res) return;
   const address = currentProfile?.address || '';
-  const patch = { donor_validated:true, pickup_address: address };
+  const minutes = res.pickup_minutes || 30;
+  const expiresAt = new Date(Date.now() + minutes*60*1000).toISOString();
+  const patch = { donor_validated:true, pickup_address: address, expires_at: expiresAt };
   if(currentProfile?.address_verified){
     patch.pickup_lat = currentProfile.lat;
     patch.pickup_lng = currentProfile.lng;
@@ -1799,7 +1802,7 @@ async function validateReservation(resId, itemId, itemName){
   await sb.from('notifications').insert({
     user_id: res.receiver_id,
     type: 'address',
-    message: `Ta réservation pour "${itemName}" est validée. Adresse pour venir chercher : ${address || 'à demander au donneur'}${verifBadge}.`
+    message: `C'est validé, tu peux y aller ! Adresse pour venir chercher "${itemName}" : ${address || 'à demander au donneur'}${verifBadge}. Tu as ${fmtCountdown(minutes*60000)} pour passer le récupérer.`
   });
   loadMine();
 }
