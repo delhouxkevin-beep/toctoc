@@ -106,6 +106,7 @@
   .item-row .info{ flex:1; min-width:0; }
   .item-row .item-name{ font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .item-row .item-sub{ font-size:10.5px; color:rgba(43,33,64,0.55); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cat-badge{ display:inline-flex; align-items:center; gap:3px; font-family:'Work Sans',sans-serif; font-weight:600; font-size:10px; color:var(--color-text-secondary); background:var(--color-surface-sunken); padding:2px 7px 2px 6px; border-radius:100px; margin-top:3px; white-space:nowrap; }
   .status-box{ flex-shrink:0; border:1px solid var(--color-border-default); border-radius:8px; padding:6px 10px; text-align:center; font-family:'Work Sans',sans-serif; font-weight:600; font-size:10px; line-height:1.3; }
   .status-box.online{ background:var(--teal); color:#fff; border-color:var(--teal); }
   .status-box.offline{ background:#EDEAF6; color:rgba(43,33,64,0.5); }
@@ -311,15 +312,9 @@
       <div class="stack" id="stack"></div>
       <div class="search-results hidden" id="searchResults"></div>
       <div class="swbar">
-        <div class="swbar-label">Durée pour venir chercher</div>
-        <div class="swbar-slider">
-          <input type="range" id="durSlider" min="15" max="480" step="15" value="30" oninput="onDurInput(this.value)">
-          <div class="swbar-val" id="durVal">30 min</div>
-        </div>
-        <div class="swbar-ticks"><span>15 min</span><span>2h</span><span>4h</span><span>8h</span></div>
         <div class="swbar-actions">
           <button class="btn-pass2" onclick="passTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
-          <button class="btn-reserve" onclick="reserveTop()">Je réserve</button>
+          <button class="btn-reserve" id="swReserveBtn" onclick="reserveTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M3 11.5h14"/><path d="M10 8v9"/><path d="M10 8C8 8 6.8 6.8 7 5.3 7.2 4 8.7 3.6 9.4 4.6c.4.6.6 1.6.6 3.4zM10 8c2 0 3.2-1.2 3-2.7-.2-1.3-1.7-1.7-2.4-.7-.4.6-.6 1.6-.6 3.4z"/></svg> Je réserve</button>
         </div>
       </div>
     </div>
@@ -524,6 +519,16 @@ function fmtItemLoc(it){
   if(it.postal_code && it.city) return `${it.postal_code} ${it.city}`;
   if(it.city && !it.city.includes(',')) return it.city; // ancien format "city" = adresse complète -> ignoré
   return '';
+}
+const CAT_BADGE = {
+  objets:     { label:'Objet',      icon: ICON.box  },
+  nourriture: { label:'Nourriture', icon: ICON.food },
+  troc:       { label:'Troc',       icon: ICON.swap },
+};
+function catBadge(cat){
+  const c = CAT_BADGE[cat];
+  if(!c) return '';
+  return `<div class="cat-badge">${c.icon} ${c.label}</div>`;
 }
 
 function getGeo(){
@@ -910,6 +915,7 @@ function setCategory(c){
   document.getElementById('segObjets').classList.toggle('active', c==='objets');
   document.getElementById('segNourriture').classList.toggle('active', c==='nourriture');
   document.getElementById('segTroc').classList.toggle('active', c==='troc');
+  document.getElementById('swReserveBtn').innerHTML = c==='troc' ? `${ICON.swap} Je propose un objet` : `${ICON.gift} Je réserve`;
   feedIndex = 0;
   searchTerm = '';
   activeSubcat = 'Toutes';
@@ -921,17 +927,6 @@ function setCategory(c){
 let feedItems = [];
 let feedIndex = 0;
 let ownerMap = {};
-let selectedDuration = 30;
-
-function onDurInput(v){
-  selectedDuration = parseInt(v);
-  document.getElementById('durVal').textContent = fmtDuration(selectedDuration);
-}
-function fmtDuration(mins){
-  if(mins < 60) return mins + " min";
-  const h = Math.floor(mins/60), m = mins%60;
-  return m===0 ? h+"h" : h+"h"+String(m).padStart(2,'0');
-}
 
 async function loadFeed(){
   const stack = document.getElementById('stack');
@@ -1556,6 +1551,7 @@ function renderMine(){
           <div class="info">
             <div class="item-name">${it.name}</div>
             <div class="item-sub">${currentProfile?.address || 'Adresse non renseignée'}</div>
+            ${catBadge(it.category)}
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
@@ -1595,6 +1591,7 @@ function renderMine(){
           <div class="info">
             <div class="item-name">${it.name}</div>
             <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}${offered ? ' · Proposé : '+offered.name : ''}</div>
+            ${catBadge(it.category)}
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
