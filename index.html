@@ -330,6 +330,7 @@
         <button class="seg-btn active" id="mineTabAnnonces" onclick="setMineTab('annonces')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg> Mes annonces</button>
         <button class="seg-btn" id="mineTabReservations" onclick="setMineTab('reservations')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M3 11.5h14"/><path d="M10 8v9"/><path d="M10 8C8 8 6.8 6.8 7 5.3 7.2 4 8.7 3.6 9.4 4.6c.4.6.6 1.6.6 3.4zM10 8c2 0 3.2-1.2 3-2.7-.2-1.3-1.7-1.7-2.4-.7-.4.6-.6 1.6-.6 3.4z"/></svg> Mes réservations</button>
       </div>
+      <div class="subcat-row" id="mineCatRow" style="padding:0 18px 10px;"></div>
       <div id="mineContent" style="padding:0 18px;"></div>
     </div>
 
@@ -1399,7 +1400,15 @@ async function submitPublish(){
 
 // ================= MES OBJETS =================
 let mineTab = 'annonces';
+let mineCat = 'toutes';
 let mineDataCache = null;
+
+const MINE_CATS = [
+  { key:'toutes', label:'Toutes' },
+  { key:'objets', label:'Objets' },
+  { key:'nourriture', label:'Nourriture' },
+  { key:'troc', label:'Troc' },
+];
 
 function setMineTab(t){
   mineTab = t;
@@ -1408,7 +1417,14 @@ function setMineTab(t){
   renderMine();
 }
 
+function renderMineCatRow(){
+  const row = document.getElementById('mineCatRow');
+  row.innerHTML = MINE_CATS.map(c=>`<button class="subcat-chip ${mineCat===c.key?'active':''}" onclick="setMineCat('${c.key}')">${c.label}</button>`).join('');
+}
+function setMineCat(c){ mineCat = c; renderMineCatRow(); renderMine(); }
+
 async function loadMine(){
+  renderMineCatRow();
   const el = document.getElementById('mineContent');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
 
@@ -1448,9 +1464,9 @@ function renderMine(){
   const { myItems, incomingRes, myRes, resItemMap } = mineDataCache;
 
   if(mineTab === 'annonces'){
-    const activeItems = myItems.filter(it => it.status !== 'attribue');
+    const activeItems = myItems.filter(it => it.status !== 'attribue' && (mineCat==='toutes' || it.category===mineCat));
     if(activeItems.length===0){
-      el.innerHTML = `<div class="empty">Tu n'as encore rien publié.</div>`;
+      el.innerHTML = `<div class="empty">${mineCat==='toutes' ? "Tu n'as encore rien publié." : "Rien dans cette catégorie."}</div>`;
       return;
     }
     el.innerHTML = activeItems.map(it => {
@@ -1506,11 +1522,15 @@ function renderMine(){
       `;
     }).join('');
   } else {
-    if(myRes.length===0){
-      el.innerHTML = `<div class="empty">Aucune réservation en cours.</div>`;
+    const filteredRes = myRes.filter(r => {
+      const it = resItemMap[r.item_id];
+      return it && (mineCat==='toutes' || it.category===mineCat);
+    });
+    if(filteredRes.length===0){
+      el.innerHTML = `<div class="empty">${mineCat==='toutes' ? "Aucune réservation en cours." : "Rien dans cette catégorie."}</div>`;
       return;
     }
-    el.innerHTML = myRes.map(r => {
+    el.innerHTML = filteredRes.map(r => {
       const it = resItemMap[r.item_id];
       if(!it) return '';
       const offered = r.offered_item_id ? myItems.find(i=>i.id===r.offered_item_id) : null;
