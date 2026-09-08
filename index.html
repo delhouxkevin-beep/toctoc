@@ -91,6 +91,8 @@
 
   .feed{ padding:0 18px; display:flex; flex-direction:column; gap:14px; }
   .card{ border:1px solid var(--color-border-default); border-radius:18px; overflow:hidden; background:var(--paper); position:relative; }
+  .card.best-match{ border:1.5px solid var(--color-brand-interactive); box-shadow:0 6px 16px -4px rgba(139,92,246,0.35); }
+  .best-match-tag{ position:absolute; top:10px; left:10px; z-index:1; background:var(--color-brand-interactive); color:#fff; font-family:'Work Sans',sans-serif; font-weight:600; font-size:10.5px; padding:4px 10px; border-radius:100px; }
 
   /* Lignes compactes "Mes objets" */
   .item-row{ display:flex; align-items:center; gap:12px; padding:10px; border:1px solid var(--color-border-default); border-radius:16px; background:var(--paper); margin-bottom:8px; }
@@ -290,6 +292,7 @@
     <div class="segmented" id="segmentedBar">
       <button class="seg-btn active" id="segObjets" onclick="setCategory('objets')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg> Objets</button>
       <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M13.2 4.5c-.8-1-2-1.3-2.9-.6"/><path d="M10 6.2C7 5.6 4.5 8 4.8 11.3 5.1 14.8 7.6 17.5 10 17.5s4.9-2.7 5.2-6.2C15.5 8 13 5.6 10 6.2z"/></svg> Nourriture</button>
+      <button class="seg-btn" id="segTroc" onclick="setCategory('troc')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Troc</button>
     </div>
     <div class="status-row" id="statusRow">
       <button class="addr-pill" id="addrPill" onclick="openLocationSheet()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 18s6-5.6 6-10.4A6 6 0 0 0 4 7.6C4 12.4 10 18 10 18z"/><circle cx="10" cy="7.5" r="2.1"/></svg> <span id="addrPillLabel">localisation…</span></button>
@@ -391,6 +394,18 @@
     <img id="imgLightboxSrc" src="" alt="">
   </div>
 
+  <!-- Choix de l'objet à proposer en échange (troc) -->
+  <div class="overlay hidden" id="trocPickOverlay" style="z-index:350;">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Quel objet proposes-tu ?</div>
+        <button class="x-btn" onclick="closeTrocPick()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;">Choisis un de tes objets en ligne à proposer en échange. Le donneur devra valider avant que l'échange soit confirmé.</p>
+      <div id="trocPickList"></div>
+    </div>
+  </div>
+
   <!-- Ma localisation -->
   <div class="overlay hidden" id="locOverlay">
     <div class="sheet">
@@ -465,6 +480,7 @@ const ICON = {
   trash:      `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6h12"/><path d="M8 6V4.5h4V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/></svg>`,
   award:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="7.5" r="4.5"/><path d="M7.3 11.5L6 17.5l4-2 4 2-1.3-6"/></svg>`,
   map:        `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M7 4L3 5.5v11L7 15l6 2 4-1.5v-11L13 6z"/><path d="M7 4v11M13 6v11"/></svg>`,
+  swap:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg>`,
 };
 // ================= CONFIG SUPABASE =================
 const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co";
@@ -714,6 +730,7 @@ const tourSteps = [
   { view:'discover', target:'#stack', title:"👉 Glisse la carte", text:"À droite pour réserver, à gauche pour passer. Tape la photo pour l'agrandir." },
   { view:'discover', target:'#publishBtnMain', title:`${ICON.camera} Publier`, text:"Un clic, une photo, c'est en ligne." },
   { view:'discover', target:'#segmentedBar', title:`${ICON.box} ${ICON.food} Catégories`, text:"Objets ou nourriture, tu bascules ici." },
+  { view:'discover', target:'#segTroc', title:`${ICON.swap} Troc`, text:"Ici, les objets s'échangent : pour réserver, tu dois proposer un des tiens en retour, et le donneur valide avant que ce soit confirmé." },
   { view:'mine', target:'#mineTabs', title:`${ICON.box} Mes objets`, text:"Tes annonces et tes réservations, bien séparées." },
   { view:'notifs', target:'#navNotifs', title:`${ICON.bell} Notifs`, text:"Réservation reçue, adresse validée : tout arrive ici." },
   { view:'profile', target:'#verifyGPSBtn', title:`${ICON.pin} Adresse vérifiée`, text:"Confirme ta position GPS pour rassurer les autres membres." },
@@ -849,6 +866,7 @@ function setCategory(c){
   category = c;
   document.getElementById('segObjets').classList.toggle('active', c==='objets');
   document.getElementById('segNourriture').classList.toggle('active', c==='nourriture');
+  document.getElementById('segTroc').classList.toggle('active', c==='troc');
   feedIndex = 0;
   searchTerm = '';
   activeSubcat = 'Toutes';
@@ -937,7 +955,15 @@ function renderSubcatRow(){
   row.innerHTML = cats.map(c=>`<button class="subcat-chip ${activeSubcat===c?'active':''}" onclick="setSubcat('${c}')">${c}</button>`).join('');
 }
 function setSubcat(c){ activeSubcat=c; renderSubcatRow(); applyFilters(); }
-function onSearchInput(v){ searchTerm=v.trim().toLowerCase(); applyFilters(); }
+let searchResultItems = [];
+let searchDebounce = null;
+
+function onSearchInput(v){
+  searchTerm = v.trim().toLowerCase();
+  clearTimeout(searchDebounce);
+  if(searchTerm.length===0){ applyFilters(); return; }
+  searchDebounce = setTimeout(()=>runBroadSearch(searchTerm), 250);
+}
 
 function applyFilters(){
   const searching = searchTerm.length>0 || activeSubcat!=='Toutes';
@@ -949,25 +975,61 @@ function applyFilters(){
     renderStack();
     return;
   }
+  if(searchTerm.length>0) return; // la recherche élargie (débouncée) gère déjà l'affichage
   stackEl.classList.add('hidden');
   resultsEl.classList.remove('hidden');
-  const filtered = feedItems.filter(it => {
-    const matchesTerm = !searchTerm || (it.name||'').toLowerCase().includes(searchTerm) || (it.description||'').toLowerCase().includes(searchTerm);
-    const matchesCat = activeSubcat==='Toutes' || it.subcategory===activeSubcat;
-    return matchesTerm && matchesCat;
+  const filtered = feedItems.filter(it => activeSubcat==='Toutes' || it.subcategory===activeSubcat);
+  renderSearchResults(filtered, false);
+}
+
+async function runBroadSearch(term){
+  const stackEl = document.getElementById('stack');
+  const resultsEl = document.getElementById('searchResults');
+  stackEl.classList.add('hidden');
+  resultsEl.classList.remove('hidden');
+  resultsEl.innerHTML = `<div class="empty">Recherche…</div>`;
+  // recherche sur TOUS les objets publiés (toutes catégories), pas seulement l'onglet en cours
+  const { data: items } = await sb.from('items')
+    .select('*')
+    .eq('status','disponible')
+    .or(`name.ilike.%${term}%,description.ilike.%${term}%`)
+    .limit(30);
+  if(searchTerm !== term) return; // l'utilisateur a retapé entre-temps, ce résultat est périmé
+  let results = (items||[]).filter(it => !(currentUser && it.owner_id===currentUser.id));
+  results = results.filter(it => (it.name||'').toLowerCase().includes(term) || (it.description||'').toLowerCase().includes(term));
+  if(activeSubcat!=='Toutes') results = results.filter(it => it.subcategory===activeSubcat);
+  // meilleure correspondance en premier (le nom commence par ce qui a été tapé)
+  results.sort((a,b)=>{
+    const aStarts = (a.name||'').toLowerCase().startsWith(term) ? 0 : 1;
+    const bStarts = (b.name||'').toLowerCase().startsWith(term) ? 0 : 1;
+    if(aStarts !== bStarts) return aStarts - bStarts;
+    return new Date(b.created_at) - new Date(a.created_at);
   });
-  if(filtered.length===0){
+  searchResultItems = results;
+  const missingOwnerIds = [...new Set(results.map(i=>i.owner_id))].filter(id=>!ownerMap[id]);
+  if(missingOwnerIds.length){
+    const { data: owners } = await sb.from('profiles').select('id,name,city').in('id', missingOwnerIds);
+    (owners||[]).forEach(o=>{ ownerMap[o.id]=o; });
+  }
+  renderSearchResults(results, true);
+}
+
+function renderSearchResults(list, isBroad){
+  const resultsEl = document.getElementById('searchResults');
+  if(list.length===0){
     resultsEl.innerHTML = `<div class="empty">Aucun résultat.</div>`;
     return;
   }
-  resultsEl.innerHTML = filtered.map(it=>{
+  resultsEl.innerHTML = list.map((it,idx)=>{
     const owner = ownerMap[it.owner_id] || {};
     const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
-    return `<div class="card">
+    const best = isBroad && idx===0 && searchTerm.length>0 && (it.name||'').toLowerCase().startsWith(searchTerm);
+    return `<div class="card ${best?'best-match':''}">
+      ${best ? `<div class="best-match-tag">Meilleure correspondance</div>` : ''}
       ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
       <div class="card-body">
         <div class="card-title">${it.name}</div>
-        <div class="card-meta">${ICON.pin} ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}</div>
+        <div class="card-meta">${ICON.pin} ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}${it.category==='troc' ? ' · '+ICON.swap+' Troc' : ''}</div>
         <button class="btn btn-teal" style="width:100%; margin-top:8px;" onclick="reserveFromList('${it.id}')">Je réserve</button>
       </div>
     </div>`;
@@ -975,10 +1037,11 @@ function applyFilters(){
 }
 
 async function reserveFromList(itemId){
-  const item = feedItems.find(i=>i.id===itemId);
+  const item = feedItems.find(i=>i.id===itemId) || searchResultItems.find(i=>i.id===itemId);
   if(!item) return;
   await confirmReserveFlow(item);
   loadFeed();
+  if(searchTerm) runBroadSearch(searchTerm);
 }
 
 function renderStack(){
@@ -1062,13 +1125,47 @@ async function handleReserveIntent(card){
   else resetCardPosition(card);
 }
 
+let trocPickResolver = null;
+function pickOfferedItem(){
+  return new Promise(async resolve => {
+    trocPickResolver = resolve;
+    const list = document.getElementById('trocPickList');
+    list.innerHTML = `<div class="empty">Chargement…</div>`;
+    document.getElementById('trocPickOverlay').classList.remove('hidden');
+    const { data: myAvail } = await sb.from('items').select('*').eq('owner_id', currentUser.id).eq('status','disponible').order('created_at',{ascending:false});
+    if(!myAvail || myAvail.length===0){
+      list.innerHTML = `<div class="empty">Tu n'as encore rien publié à proposer en échange.<br>Publie d'abord un objet, puis reviens ici.</div>`;
+      return;
+    }
+    list.innerHTML = myAvail.map(it => `
+      <div class="item-row" style="cursor:pointer;" onclick="resolveTrocPick('${it.id}')">
+        <div class="thumb-wrap">${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="">` : `<div class="thumb-empty">${ICON.box}</div>`}</div>
+        <div class="info"><div class="item-name">${it.name}</div></div>
+      </div>
+    `).join('');
+  });
+}
+function resolveTrocPick(id){
+  document.getElementById('trocPickOverlay').classList.add('hidden');
+  if(trocPickResolver){ trocPickResolver(id); trocPickResolver = null; }
+}
+function closeTrocPick(){
+  document.getElementById('trocPickOverlay').classList.add('hidden');
+  if(trocPickResolver){ trocPickResolver(null); trocPickResolver = null; }
+}
+
 async function confirmReserveFlow(item){
   if(!item || !currentUser) return false;
   const { data: existing } = await sb.from('reservations').select('id').eq('item_id', item.id).eq('receiver_id', currentUser.id);
   if(existing && existing.length){ alert("Tu as déjà réservé cet objet."); return false; }
+  let offeredItemId = null;
+  if(item.category === 'troc'){
+    offeredItemId = await pickOfferedItem();
+    if(!offeredItemId) return false;
+  }
   const minutes = await askPickupDelay();
   if(!minutes) return false;
-  return await reserveItem(item.id, minutes);
+  return await reserveItem(item.id, minutes, offeredItemId);
 }
 
 function passTop(){
@@ -1145,7 +1242,9 @@ function renderStory(){
   bars.innerHTML = feedItems.map((_,idx) => `<div class="${idx===storyIndex?'active':''}"></div>`).join('');
 
   const btn = document.getElementById('storyReserveBtn');
-  btn.textContent = '🎁 Je réserve cet objet';
+  btn.innerHTML = it.category==='troc'
+    ? `${ICON.swap} Je propose un troc`
+    : `${ICON.gift} Je réserve cet objet`;
   btn.classList.remove('done');
   btn.disabled = false;
 }
@@ -1157,21 +1256,9 @@ async function storyReserve(){
   if(btn.disabled) return; // anti double-clic
   btn.disabled = true;
 
-  // demande le délai avant de valider
-  const minutes = await askPickupDelay();
-  if(!minutes){ btn.disabled = false; return; }
-
-  // vérifie qu'il n'existe pas déjà une réservation de cet utilisateur sur cet objet
-  const { data: existing } = await sb.from('reservations').select('id').eq('item_id', it.id).eq('receiver_id', currentUser.id);
-  if(existing && existing.length){
-    alert("Tu as déjà réservé cet objet.");
-    btn.disabled = false;
-    return;
-  }
-
-  const ok = await reserveItem(it.id, minutes);
+  const ok = await confirmReserveFlow(it);
   if(!ok){ btn.disabled = false; return; }
-  btn.textContent = 'Réservé ✓';
+  btn.textContent = it.category==='troc' ? 'Proposition envoyée ✓' : 'Réservé ✓';
   btn.classList.add('done');
   setTimeout(()=>{ closeStory(); loadFeed(); }, 600);
 }
@@ -1192,18 +1279,25 @@ function closeDelaySheet(minutes){
   }
 }
 
-async function reserveItem(itemId, durationMinutes){
+async function reserveItem(itemId, durationMinutes, offeredItemId){
   if(!currentUser) return false;
   const expiresAt = new Date(Date.now() + durationMinutes*60*1000).toISOString();
   const { data: itemRow } = await sb.from('items').select('owner_id,name').eq('id', itemId).single();
-  const { error: e1 } = await sb.from('reservations').insert({ item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt });
+  const insertPayload = { item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt };
+  if(offeredItemId) insertPayload.offered_item_id = offeredItemId;
+  const { error: e1 } = await sb.from('reservations').insert(insertPayload);
   if(e1){ alert("La réservation a échoué : " + e1.message + "\n\nL'objet reste disponible, réessaie."); return false; }
   await sb.from('items').update({ status:'reserve' }).eq('id', itemId);
   if(itemRow){
+    let message = `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.`;
+    if(offeredItemId){
+      const { data: offeredRow } = await sb.from('items').select('name').eq('id', offeredItemId).single();
+      message = `On te propose "${offeredRow?.name || 'un objet'}" en échange de "${itemRow.name}" ! Regarde dans Mes objets pour valider.`;
+    }
     await sb.from('notifications').insert({
       user_id: itemRow.owner_id,
       type: 'reservation_incoming',
-      message: `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.`
+      message
     });
   }
   return true;
@@ -1324,6 +1418,12 @@ async function loadMine(){
     ? await sb.from('reservations').select('*').in('item_id', myItemIds)
     : { data: [] };
 
+  const offeredIds = [...new Set((incomingRes||[]).map(r=>r.offered_item_id).filter(Boolean))];
+  const { data: offeredItems } = offeredIds.length
+    ? await sb.from('items').select('*').in('id', offeredIds)
+    : { data: [] };
+  const offeredItemMap = Object.fromEntries((offeredItems||[]).map(i=>[i.id,i]));
+
   const { data: myRes } = await sb.from('reservations').select('*').eq('receiver_id', currentUser.id).order('created_at',{ascending:false});
   const resItemIds = (myRes||[]).map(r=>r.item_id);
   const { data: resItems } = resItemIds.length
@@ -1331,7 +1431,7 @@ async function loadMine(){
     : { data: [] };
   const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i]));
 
-  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap };
+  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap };
   renderMine();
 }
 
@@ -1355,6 +1455,7 @@ function renderMine(){
     }
     el.innerHTML = activeItems.map(it => {
       const res = incomingRes.find(r=>r.item_id===it.id);
+      const offeredItem = res?.offered_item_id ? mineDataCache.offeredItemMap[res.offered_item_id] : null;
       let action = '';
       let statusLabel, statusClass;
 
@@ -1367,7 +1468,18 @@ function renderMine(){
         statusLabel = 'RÉSERVÉ'; statusClass = 'pending';
         const verified = currentProfile?.address_verified;
         const addrWarning = verified ? '' : `<div style="font-size:10.5px; color:#B24C34; margin-top:4px;">${ICON.warning} Ton adresse n'est pas encore vérifiée par GPS (Profil → Vérifier mon adresse)</div>`;
-        action = `<div class="val-card">${ICON.bell} Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
+        const offerBlock = offeredItem ? `
+          <div class="item-row" style="background:var(--color-surface-subtle); margin:8px 0 0; padding:8px;">
+            <div class="thumb-wrap" style="width:42px; height:42px;">${offeredItem.photo_url ? `<img class="thumb" src="${offeredItem.photo_url}" alt="" style="width:100%; height:100%;">` : `<div class="thumb-empty">${ICON.box}</div>`}</div>
+            <div class="info"><div class="item-sub" style="font-weight:600;">Proposé en échange : ${offeredItem.name}</div></div>
+          </div>` : '';
+        const introMsg = offeredItem ? `${ICON.swap} On te propose un troc contre cet objet !` : `${ICON.bell} Quelqu'un a réservé cet objet !`;
+        action = `<div class="val-card">${introMsg}${offerBlock}${addrWarning}
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-teal" style="width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button>
+            <button class="withdraw-btn" style="flex-shrink:0;" onclick="declineReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Refuser</button>
+          </div>
+        </div>`;
       } else if(it.status === 'retire'){
         statusLabel = 'RETIRÉ'; statusClass = 'offline';
       } else {
@@ -1401,6 +1513,7 @@ function renderMine(){
     el.innerHTML = myRes.map(r => {
       const it = resItemMap[r.item_id];
       if(!it) return '';
+      const offered = r.offered_item_id ? myItems.find(i=>i.id===r.offered_item_id) : null;
       const done = it.status === 'attribue';
       const statusLabel = done ? 'RÉCUPÉRÉ' : (r.donor_validated ? 'À RÉCUPÉRER' : 'EN ATTENTE');
       const statusClass = done ? 'offline' : (r.donor_validated ? 'pending' : 'pending');
@@ -1418,7 +1531,7 @@ function renderMine(){
           ${thumb}
           <div class="info">
             <div class="item-name">${it.name}</div>
-            <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}</div>
+            <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}${offered ? ' · Proposé : '+offered.name : ''}</div>
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
@@ -1459,8 +1572,22 @@ async function validateReservation(resId, itemId, itemName){
   loadMine();
 }
 
+async function declineReservation(resId, itemId, itemName){
+  if(!confirm(`Refuser cette réservation pour "${itemName}" ? L'objet redeviendra disponible pour les autres.`)) return;
+  const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
+  if(!res) return;
+  await sb.from('reservations').delete().eq('id', resId);
+  await sb.from('items').update({ status:'disponible' }).eq('id', itemId);
+  await sb.from('notifications').insert({
+    user_id: res.receiver_id,
+    type: 'declined',
+    message: `Ta réservation pour "${itemName}" a été refusée par le donneur. L'objet est de nouveau disponible pour les autres.`
+  });
+  loadMine();
+}
+
 // ================= NOTIFICATIONS =================
-const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award };
+const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close };
 async function loadNotifs(){
   const el = document.getElementById('viewNotifs');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
@@ -1474,7 +1601,7 @@ async function loadNotifs(){
       <div class="notif-head">
         <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
         <div style="flex:1;">
-          <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : 'Notification'}</div>
+          <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : 'Notification'}</div>
           <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
         </div>
         <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
