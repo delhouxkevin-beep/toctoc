@@ -81,6 +81,8 @@
   .subcat-row{ display:flex; gap:6px; padding:0 18px 10px; overflow-x:auto; }
   .subcat-row::-webkit-scrollbar{ display:none; }
   .subcat-chip{ flex:0 0 auto; padding:7px 13px; border-radius:100px; border:1px solid var(--color-border-default); background:var(--paper); color:var(--ink-soft); font-family:'Work Sans',sans-serif; font-weight:600; font-size:11.5px; cursor:pointer; white-space:nowrap; }
+  .mine-cat-btn{ flex:1; padding:12px 8px; border-radius:14px; border:1px solid var(--color-border-default); background:var(--paper); color:var(--ink-soft); font-family:'Work Sans',sans-serif; font-weight:600; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .mine-cat-btn.active{ background:var(--color-brand-interactive); border-color:var(--color-brand-interactive); color:#fff; }
   .subcat-chip.active{ background:var(--purple); color:#fff; border-color:var(--purple); }
   .search-results{ padding:0 18px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:100%; }
   .search-results.hidden{ display:none; }
@@ -244,8 +246,14 @@
   .nav-logo-circle{ width:22px; height:22px; border-radius:50%; background:#FFF6EC; border:1px solid var(--color-border-default); display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .nav-logo-circle svg{ width:16px; height:16px; }
   .badge{ position:relative; top:-2px; background:var(--coral); color:#fff; font-size:9px; border-radius:100px; padding:1px 5px; margin-left:3px; }
+  .notif-bell-btn{ position:relative; width:38px; height:38px; border-radius:50%; border:1px solid var(--color-border-default); background:var(--paper); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .notif-dot{ position:absolute; top:6px; right:7px; width:9px; height:9px; border-radius:50%; background:var(--coral); border:1.5px solid var(--paper); }
 
   .val-card{ background:#F2ECFF; border:2px dashed var(--purple); border-radius:14px; padding:12px; margin-top:8px; font-size:12px; }
+  .chat-bubble{ max-width:78%; padding:8px 12px; border-radius:14px; font-size:13px; line-height:1.35; }
+  .chat-bubble.mine{ align-self:flex-end; background:var(--color-brand-interactive); color:#fff; border-bottom-right-radius:4px; }
+  .chat-bubble.theirs{ align-self:flex-start; background:var(--color-surface-sunken); color:var(--color-text-primary); border-bottom-left-radius:4px; }
+  .chat-time{ font-size:9.5px; opacity:0.65; margin-top:3px; }
   .addr-line{ font-family:'Space Mono',monospace; font-size:12px; color:var(--teal-dark); margin-top:6px; }
   .hidden{ display:none !important; }
 
@@ -287,7 +295,13 @@
         Toc<span>Toc</span> <span style="font-size:10px; color:rgba(43,33,64,0.4);">· test</span>
         <button class="tour-replay-btn" onclick="startTour()" title="Revoir la présentation">?</button>
       </div>
-      <button class="pill connected" id="userPill" onclick="switchView('profile')">…</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="notif-bell-btn" id="notifBellBtn" onclick="openNotifsOverlay()">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8z"/><path d="M8.2 16a1.8 1.8 0 0 0 3.6 0"/></svg>
+          <span class="notif-dot hidden" id="notifBadge"></span>
+        </button>
+        <button class="pill connected" id="userPill" onclick="switchView('profile')">…</button>
+      </div>
     </div>
 
     <div class="segmented" id="segmentedBar">
@@ -329,9 +343,6 @@
       <div id="mineContent" style="padding:0 18px;"></div>
     </div>
 
-    <!-- Notifications -->
-    <div id="viewNotifs" class="hidden" style="padding:0 18px;"></div>
-
     <!-- Profil -->
     <div id="viewProfile" class="hidden" style="padding:0 18px;"></div>
 
@@ -348,7 +359,6 @@
         <span>Découvrir</span>
       </button>
       <button class="navbtn" id="navMine" onclick="switchView('mine')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg><span>Mes objets</span></button>
-      <button class="navbtn" id="navNotifs" onclick="switchView('notifs')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8z"/><path d="M8.2 16a1.8 1.8 0 0 0 3.6 0"/></svg><span>Notifs<span class="badge hidden" id="notifBadge">0</span></span></button>
       <button class="navbtn" id="navProfile" onclick="switchView('profile')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c.8-3.8 3.6-5.8 6.5-5.8s5.7 2 6.5 5.8"/></svg><span>Profil</span></button>
     </div>
   </div>
@@ -380,7 +390,8 @@
       </div>
       <label>Ou un autre délai (minutes)</label>
       <input type="number" id="delayCustomInput" placeholder="ex: 45" min="1">
-      <button class="btn-main" onclick="closeDelaySheet(parseInt(document.getElementById('delayCustomInput').value))">Valider</button>
+      <button class="btn-main" onclick="submitCustomDelay()">Valider</button>
+      <div id="delayCustomMsg"></div>
     </div>
   </div>
 
@@ -399,6 +410,51 @@
       </div>
       <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;">Choisis un de tes objets en ligne à proposer en échange. Le donneur devra valider avant que l'échange soit confirmé.</p>
       <div id="trocPickList"></div>
+    </div>
+  </div>
+
+  <!-- Fenêtre d'alerte stylée (remplace alert() natif) -->
+  <div class="overlay hidden" id="appAlertOverlay" style="z-index:500;">
+    <div class="sheet">
+      <p id="appAlertMsg" style="font-size:13.5px; color:var(--ink-soft); white-space:pre-line; margin-top:4px;"></p>
+      <button class="btn-main" onclick="closeAppAlert()">OK</button>
+    </div>
+  </div>
+
+  <!-- Fenêtre de confirmation stylée (remplace confirm() natif) -->
+  <div class="overlay hidden" id="appConfirmOverlay" style="z-index:500;">
+    <div class="sheet">
+      <p id="appConfirmMsg" style="font-size:13.5px; color:var(--ink-soft); white-space:pre-line; margin-top:4px;"></p>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button class="withdraw-btn" style="flex:1;" onclick="resolveAppConfirm(false)">Annuler</button>
+        <button class="btn btn-teal" style="flex:1;" onclick="resolveAppConfirm(true)">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="overlay hidden" id="notifsOverlay" style="z-index:340;">
+    <div class="sheet" style="max-height:80vh;">
+      <div class="sheet-head">
+        <div class="sheet-title" id="notifsOverlayTitle">Notifications</div>
+        <button class="x-btn" onclick="closeNotifsOverlay()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <div id="viewNotifs"></div>
+    </div>
+  </div>
+
+  <!-- Messagerie troc -->
+  <div class="overlay hidden" id="chatOverlay" style="z-index:360;">
+    <div class="sheet" style="display:flex; flex-direction:column; height:80vh; padding-bottom:12px;">
+      <div class="sheet-head">
+        <div class="sheet-title" id="chatTitle">Discussion</div>
+        <button class="x-btn" onclick="closeTrocChat()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <div id="chatMessages" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px;"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input id="chatInput" placeholder="Écris ton message…" style="flex:1; margin:0;" onkeydown="if(event.key==='Enter') sendTrocMessage()">
+        <button class="btn btn-teal" style="flex-shrink:0; padding:0 16px;" onclick="sendTrocMessage()">Envoyer</button>
+      </div>
     </div>
   </div>
 
@@ -779,7 +835,7 @@ const tourSteps = [
   { view:'discover', target:'#segmentedBar', title:`${ICON.box} ${ICON.food} Catégories`, text:"Objets ou nourriture, tu bascules ici." },
   { view:'discover', target:'#segTroc', title:`${ICON.swap} Troc`, text:"Ici, les objets s'échangent : pour réserver, tu dois proposer un des tiens en retour, et le donneur valide avant que ce soit confirmé." },
   { view:'mine', target:'#mineTabs', title:`${ICON.box} Mes objets`, text:"Tes annonces et tes réservations, bien séparées." },
-  { view:'notifs', target:'#navNotifs', title:`${ICON.bell} Notifs`, text:"Réservation reçue, adresse validée : tout arrive ici." },
+  { view:'discover', target:'#notifBellBtn', title:`${ICON.bell} Notifs`, text:"Réservation reçue, adresse validée : tout arrive ici, en cliquant sur la cloche." },
   { view:'profile', target:'#verifyGPSBtn', title:`${ICON.pin} Adresse vérifiée`, text:"Confirme ta position GPS pour rassurer les autres membres." },
   { view:'discover', target:null, title:"C'est tout ! 🎉", text:"Amuse-toi bien et merci de donner une seconde vie à tes objets !" },
 ];
@@ -878,7 +934,7 @@ function subscribeToNotifications(){
 
 async function askNotifPermission(){
   if(!('Notification' in window)){
-    alert("Ton navigateur ne supporte pas les notifications.");
+    await showAppAlert("Ton navigateur ne supporte pas les notifications.");
     return;
   }
   const perm = await Notification.requestPermission();
@@ -899,15 +955,26 @@ async function doLogout(){
 // ================= NAVIGATION =================
 function switchView(v){
   currentView = v;
-  ['discover','mine','notifs','profile'].forEach(x=>{
+  ['discover','mine','profile'].forEach(x=>{
     document.getElementById('view'+x[0].toUpperCase()+x.slice(1)).classList.toggle('hidden', x!==v);
     document.getElementById('nav'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('active', x===v);
   });
   document.getElementById('segmentedBar').classList.toggle('hidden', v!=='discover');
   document.getElementById('statusRow').classList.toggle('hidden', v!=='discover');
+  document.getElementById('searchRow').classList.toggle('hidden', v!=='discover');
+  document.getElementById('subcatRow').classList.toggle('hidden', v!=='discover');
+  if(v!=='discover') document.getElementById('radiusPanel').classList.add('hidden');
   if(v==='mine') loadMine();
-  if(v==='notifs') loadNotifs();
   if(v==='profile') renderProfile();
+}
+
+function openNotifsOverlay(){
+  document.getElementById('notifsOverlay').classList.remove('hidden');
+  loadNotifs();
+}
+function closeNotifsOverlay(){
+  document.getElementById('notifsOverlay').classList.add('hidden');
+  updateNotifBadge();
 }
 
 function setCategory(c){
@@ -1163,6 +1230,31 @@ async function handleReserveIntent(card){
   else resetCardPosition(card);
 }
 
+let appAlertResolver = null;
+function showAppAlert(message){
+  return new Promise(resolve=>{
+    appAlertResolver = resolve;
+    document.getElementById('appAlertMsg').textContent = message;
+    document.getElementById('appAlertOverlay').classList.remove('hidden');
+  });
+}
+function closeAppAlert(){
+  document.getElementById('appAlertOverlay').classList.add('hidden');
+  if(appAlertResolver){ appAlertResolver(); appAlertResolver = null; }
+}
+let appConfirmResolver = null;
+function showAppConfirm(message){
+  return new Promise(resolve=>{
+    appConfirmResolver = resolve;
+    document.getElementById('appConfirmMsg').textContent = message;
+    document.getElementById('appConfirmOverlay').classList.remove('hidden');
+  });
+}
+function resolveAppConfirm(val){
+  document.getElementById('appConfirmOverlay').classList.add('hidden');
+  if(appConfirmResolver){ appConfirmResolver(val); appConfirmResolver = null; }
+}
+
 let trocPickResolver = null;
 function pickOfferedItem(){
   return new Promise(async resolve => {
@@ -1195,11 +1287,13 @@ function closeTrocPick(){
 async function confirmReserveFlow(item){
   if(!item || !currentUser) return false;
   const { data: existing } = await sb.from('reservations').select('id').eq('item_id', item.id).eq('receiver_id', currentUser.id);
-  if(existing && existing.length){ alert("Tu as déjà réservé cet objet."); return false; }
+  if(existing && existing.length){ await showAppAlert("Tu as déjà réservé cet objet."); return false; }
   let offeredItemId = null;
   if(item.category === 'troc'){
     offeredItemId = await pickOfferedItem();
     if(!offeredItemId) return false;
+    // pour un troc, pas de délai à choisir tout de suite : ça se négocie via la messagerie une fois la proposition envoyée
+    return await reserveItem(item.id, 1440, offeredItemId);
   }
   const minutes = await askPickupDelay();
   if(!minutes) return false;
@@ -1306,6 +1400,7 @@ function askPickupDelay(){
   return new Promise(resolve => {
     delayResolver = resolve;
     document.getElementById('delayCustomInput').value = '';
+    document.getElementById('delayCustomMsg').innerHTML = '';
     document.getElementById('delayOverlay').classList.remove('hidden');
   });
 }
@@ -1316,6 +1411,14 @@ function closeDelaySheet(minutes){
     delayResolver = null;
   }
 }
+function submitCustomDelay(){
+  const val = parseInt(document.getElementById('delayCustomInput').value);
+  if(!val || val <= 0){
+    document.getElementById('delayCustomMsg').innerHTML = `<div class="msg err">Choisis une durée ci-dessus, ou entre un nombre de minutes ici.</div>`;
+    return;
+  }
+  closeDelaySheet(val);
+}
 
 async function reserveItem(itemId, durationMinutes, offeredItemId){
   if(!currentUser) return false;
@@ -1324,7 +1427,7 @@ async function reserveItem(itemId, durationMinutes, offeredItemId){
   const insertPayload = { item_id: itemId, receiver_id: currentUser.id, expires_at: expiresAt };
   if(offeredItemId) insertPayload.offered_item_id = offeredItemId;
   const { error: e1 } = await sb.from('reservations').insert(insertPayload);
-  if(e1){ alert("La réservation a échoué : " + e1.message + "\n\nL'objet reste disponible, réessaie."); return false; }
+  if(e1){ await showAppAlert("La réservation a échoué : " + e1.message + "\n\nL'objet reste disponible, réessaie."); return false; }
   await sb.from('items').update({ status:'reserve' }).eq('id', itemId);
   if(itemRow){
     let message = `Quelqu'un a réservé "${itemRow.name}" ! Valide dans Mes objets pour envoyer ton adresse.`;
@@ -1347,9 +1450,9 @@ let pubPhotoFile = null;
 let pubPhotoPreviewUrl = null;
 let pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
 
-function openPublish(){
+async function openPublish(){
   if(!currentProfile?.address_verified){
-    alert("Confirme d'abord ton adresse exacte avec ta position GPS avant de publier un objet — c'est indispensable pour que les distances s'affichent correctement.");
+    await showAppAlert("Confirme d'abord ton adresse exacte avec ta position GPS avant de publier un objet — c'est indispensable pour que les distances s'affichent correctement.");
     openLocationSheet();
     return;
   }
@@ -1438,14 +1541,13 @@ async function submitPublish(){
 
 // ================= MES OBJETS =================
 let mineTab = 'annonces';
-let mineCat = 'toutes';
+let mineCat = 'objets';
 let mineDataCache = null;
 
 const MINE_CATS = [
-  { key:'toutes', label:'Toutes' },
-  { key:'objets', label:'Objets' },
-  { key:'nourriture', label:'Nourriture' },
-  { key:'troc', label:'Troc' },
+  { key:'objets', label:'Objets', icon: ICON.box },
+  { key:'nourriture', label:'Nourriture', icon: ICON.food },
+  { key:'troc', label:'Troc', icon: ICON.swap },
 ];
 
 function setMineTab(t){
@@ -1457,7 +1559,7 @@ function setMineTab(t){
 
 function renderMineCatRow(){
   const row = document.getElementById('mineCatRow');
-  row.innerHTML = MINE_CATS.map(c=>`<button class="subcat-chip ${mineCat===c.key?'active':''}" onclick="setMineCat('${c.key}')">${c.label}</button>`).join('');
+  row.innerHTML = MINE_CATS.map(c=>`<button class="mine-cat-btn ${mineCat===c.key?'active':''}" onclick="setMineCat('${c.key}')">${c.icon} ${c.label}</button>`).join('');
 }
 function setMineCat(c){ mineCat = c; renderMineCatRow(); renderMine(); }
 
@@ -1485,7 +1587,17 @@ async function loadMine(){
     : { data: [] };
   const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i]));
 
-  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap };
+  // noms des interlocuteurs (pour les boutons "Discuter" côté troc)
+  const peopleIds = [...new Set([
+    ...(incomingRes||[]).map(r=>r.receiver_id),
+    ...(resItems||[]).map(i=>i.owner_id)
+  ])].filter(Boolean);
+  const { data: people } = peopleIds.length
+    ? await sb.from('profiles').select('id,name').in('id', peopleIds)
+    : { data: [] };
+  const peopleMap = Object.fromEntries((people||[]).map(p=>[p.id,p.name]));
+
+  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap, peopleMap };
   renderMine();
 }
 
@@ -1502,9 +1614,9 @@ function renderMine(){
   const { myItems, incomingRes, myRes, resItemMap } = mineDataCache;
 
   if(mineTab === 'annonces'){
-    const activeItems = myItems.filter(it => it.status !== 'attribue' && (mineCat==='toutes' || it.category===mineCat));
+    const activeItems = myItems.filter(it => it.status !== 'attribue' && it.category===mineCat);
     if(activeItems.length===0){
-      el.innerHTML = `<div class="empty">${mineCat==='toutes' ? "Tu n'as encore rien publié." : "Rien dans cette catégorie."}</div>`;
+      el.innerHTML = `<div class="empty">Rien dans cette catégorie.</div>`;
       return;
     }
     el.innerHTML = activeItems.map(it => {
@@ -1528,11 +1640,14 @@ function renderMine(){
             <div class="info"><div class="item-sub" style="font-weight:600;">Proposé en échange : ${offeredItem.name}</div></div>
           </div>` : '';
         const introMsg = offeredItem ? `${ICON.swap} On te propose un troc contre cet objet !` : `${ICON.bell} Quelqu'un a réservé cet objet !`;
+        const requesterName = mineDataCache.peopleMap[res.receiver_id] || 'la personne';
+        const chatBtn = offeredItem ? `<button class="btn btn-ghost" style="width:100%; margin-top:6px;" onclick="openTrocChat('${res.id}','${res.receiver_id}','${requesterName.replace(/'/g,"\\'")}')">${ICON.swap} Discuter avec ${requesterName}</button>` : '';
         action = `<div class="val-card">${introMsg}${offerBlock}${addrWarning}
           <div style="display:flex; gap:8px; margin-top:8px;">
             <button class="btn btn-teal" style="width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button>
             <button class="withdraw-btn" style="flex-shrink:0;" onclick="declineReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Refuser</button>
           </div>
+          ${chatBtn}
         </div>`;
       } else if(it.status === 'retire'){
         statusLabel = 'RETIRÉ'; statusClass = 'offline';
@@ -1563,10 +1678,10 @@ function renderMine(){
   } else {
     const filteredRes = myRes.filter(r => {
       const it = resItemMap[r.item_id];
-      return it && (mineCat==='toutes' || it.category===mineCat);
+      return it && it.status !== 'attribue' && it.category===mineCat;
     });
     if(filteredRes.length===0){
-      el.innerHTML = `<div class="empty">${mineCat==='toutes' ? "Aucune réservation en cours." : "Rien dans cette catégorie."}</div>`;
+      el.innerHTML = `<div class="empty">Rien dans cette catégorie.</div>`;
       return;
     }
     el.innerHTML = filteredRes.map(r => {
@@ -1585,6 +1700,8 @@ function renderMine(){
         const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">${ICON.map} Maps</a>` : '';
         addrBlock = `<div class="item-extra"><div class="addr-line">${ICON.pin} ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>` : ''}</div>`;
       }
+      const ownerName = mineDataCache.peopleMap[it.owner_id] || 'le donneur';
+      const chatBlock = (offered && !done) ? `<div class="item-extra"><button class="btn btn-ghost" style="width:100%;" onclick="openTrocChat('${r.id}','${it.owner_id}','${ownerName.replace(/'/g,"\\'")}')">${ICON.swap} Discuter avec ${ownerName}</button></div>` : '';
       return `
         <div class="item-row">
           ${thumb}
@@ -1596,20 +1713,21 @@ function renderMine(){
           <div class="status-box ${statusClass}">${statusLabel}</div>
         </div>
         ${addrBlock}
+        ${chatBlock}
       `;
     }).join('');
   }
 }
 
 async function withdrawItem(itemId){
-  if(!confirm("Retirer cette annonce ? Elle ne sera plus visible dans Découvrir.")) return;
+  if(!(await showAppConfirm("Retirer cette annonce ? Elle ne sera plus visible dans Découvrir."))) return;
   await sb.from('items').update({ status:'retire' }).eq('id', itemId);
   loadMine();
 }
 
 async function confirmPickup(itemId, category){
   await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
-  alert(category==='nourriture' ? "🎉 Bien joué, tu as aidé quelqu'un !" : "🎉 Bien joué, tu t'en es débarrassé !");
+  await showAppAlert(category==='nourriture' ? "🎉 Bien joué, tu as aidé quelqu'un !" : "🎉 Bien joué, tu t'en es débarrassé !");
   loadMine();
 }
 
@@ -1633,7 +1751,7 @@ async function validateReservation(resId, itemId, itemName){
 }
 
 async function declineReservation(resId, itemId, itemName){
-  if(!confirm(`Refuser cette réservation pour "${itemName}" ? L'objet redeviendra disponible pour les autres.`)) return;
+  if(!(await showAppConfirm(`Refuser cette réservation pour "${itemName}" ? L'objet redeviendra disponible pour les autres.`))) return;
   const { data: res } = await sb.from('reservations').select('*').eq('id', resId).single();
   if(!res) return;
   await sb.from('reservations').delete().eq('id', resId);
@@ -1646,32 +1764,92 @@ async function declineReservation(resId, itemId, itemName){
   loadMine();
 }
 
+// ================= MESSAGERIE TROC =================
+let chatReservationId = null;
+let chatOtherId = null;
+let chatChannel = null;
+
+async function openTrocChat(reservationId, otherId, otherName){
+  chatReservationId = reservationId;
+  chatOtherId = otherId;
+  document.getElementById('chatTitle').innerHTML = `${ICON.swap} Discussion avec ${otherName || 'le troceur'}`;
+  document.getElementById('chatInput').value = '';
+  document.getElementById('chatOverlay').classList.remove('hidden');
+  await loadTrocMessages();
+  if(chatChannel) sb.removeChannel(chatChannel);
+  chatChannel = sb.channel('chat-'+reservationId)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages', filter:`reservation_id=eq.${reservationId}` }, () => loadTrocMessages())
+    .subscribe();
+}
+function closeTrocChat(){
+  document.getElementById('chatOverlay').classList.add('hidden');
+  if(chatChannel){ sb.removeChannel(chatChannel); chatChannel = null; }
+  chatReservationId = null;
+}
+async function loadTrocMessages(){
+  if(!chatReservationId) return;
+  const { data: msgs } = await sb.from('messages').select('*').eq('reservation_id', chatReservationId).order('created_at', {ascending:true});
+  renderTrocMessages(msgs || []);
+}
+function renderTrocMessages(msgs){
+  const el = document.getElementById('chatMessages');
+  if(msgs.length===0){
+    el.innerHTML = `<div class="empty">Aucun message pour l'instant. Lance la discussion !</div>`;
+    return;
+  }
+  el.innerHTML = msgs.map(m => {
+    const mine = m.sender_id === currentUser.id;
+    const time = new Date(m.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    return `<div class="chat-bubble ${mine?'mine':'theirs'}">${(m.content||'').replace(/</g,'&lt;')}<div class="chat-time">${time}</div></div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+async function sendTrocMessage(){
+  const input = document.getElementById('chatInput');
+  const content = input.value.trim();
+  if(!content || !chatReservationId || !currentUser) return;
+  input.value = '';
+  const { error } = await sb.from('messages').insert({ reservation_id: chatReservationId, sender_id: currentUser.id, content });
+  if(error){ await showAppAlert("Message non envoyé : " + error.message); return; }
+  if(chatOtherId){
+    await sb.from('notifications').insert({
+      user_id: chatOtherId,
+      type: 'message',
+      message: `Nouveau message dans votre discussion troc : "${content.slice(0,60)}${content.length>60?'…':''}"`
+    });
+  }
+  loadTrocMessages();
+}
+
 // ================= NOTIFICATIONS =================
-const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close };
+const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close, message:ICON.swap };
 async function loadNotifs(){
   const el = document.getElementById('viewNotifs');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
-  const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).eq('read', false).order('created_at',{ascending:false});
+  const cutoff = new Date(Date.now() - 12*3600*1000).toISOString();
+  const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', currentUser.id)
+    .or(`read.eq.false,read_at.gt.${cutoff}`)
+    .order('created_at',{ascending:false});
   if(!notifs || notifs.length===0){
-    el.innerHTML = `<div class="section-title">${ICON.bell} Notifications</div><div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
-    return;
-  }
-  el.innerHTML = `<div class="section-title">${ICON.bell} Notifications</div>` + notifs.map(n => `
-    <div class="notif-card" id="notif-${n.id}">
-      <div class="notif-head">
-        <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
-        <div style="flex:1;">
-          <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : 'Notification'}</div>
-          <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
+    el.innerHTML = `<div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
+  } else {
+    el.innerHTML = notifs.map(n => `
+      <div class="notif-card" id="notif-${n.id}">
+        <div class="notif-head">
+          <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
+          <div style="flex:1;">
+            <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : 'Notification'}</div>
+            <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
+          </div>
+          <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
         </div>
-        <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
+        <div class="notif-msg">${n.message}</div>
+        ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
       </div>
-      <div class="notif-msg">${n.message}</div>
-      ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
-    </div>
-  `).join('');
-  // marque tout comme lu : au prochain passage, ces notifications ne réapparaîtront plus
-  await sb.from('notifications').update({ read:true }).eq('user_id', currentUser.id).eq('read', false);
+    `).join('');
+  }
+  // marque comme lu : le petit rond disparaît tout de suite, mais la notification reste visible ici 12h
+  await sb.from('notifications').update({ read:true, read_at:new Date().toISOString() }).eq('user_id', currentUser.id).eq('read', false);
   updateNotifBadge();
 }
 async function dismissNotif(id){
