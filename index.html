@@ -281,23 +281,23 @@
     </div>
 
     <div class="segmented" id="segmentedBar">
-      <button class="seg-btn active" id="segObjets" onclick="setCategory('objets')">📦 Objets</button>
-      <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')">🍎 Nourriture</button>
+      <button class="seg-btn active" id="segObjets" onclick="setCategory('objets')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg> Objets</button>
+      <button class="seg-btn" id="segNourriture" onclick="setCategory('nourriture')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M13.2 4.5c-.8-1-2-1.3-2.9-.6"/><path d="M10 6.2C7 5.6 4.5 8 4.8 11.3 5.1 14.8 7.6 17.5 10 17.5s4.9-2.7 5.2-6.2C15.5 8 13 5.6 10 6.2z"/></svg> Nourriture</button>
     </div>
     <div class="status-row" id="statusRow">
-      <button class="addr-pill" id="addrPill" onclick="openLocationSheet()">📍 <span id="addrPillLabel">localisation…</span></button>
-      <button class="radius-pill" id="radiusPill" onclick="toggleRadiusPanel()">🔎 <span id="radiusPillLabel">20 km</span></button>
+      <button class="addr-pill" id="addrPill" onclick="openLocationSheet()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 18s6-5.6 6-10.4A6 6 0 0 0 4 7.6C4 12.4 10 18 10 18z"/><circle cx="10" cy="7.5" r="2.1"/></svg> <span id="addrPillLabel">localisation…</span></button>
+      <button class="radius-pill" id="radiusPill" onclick="toggleRadiusPanel()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M16.5 16.5l-4-4"/></svg> <span id="radiusPillLabel">20 km</span></button>
       <span id="itemCount"></span>
     </div>
     <div class="radius-panel hidden" id="radiusPanel"></div>
     <div class="search-row" id="searchRow">
-      <input type="text" id="searchInput" placeholder="🔍 Rechercher un objet…" oninput="onSearchInput(this.value)">
+      <input type="text" id="searchInput" placeholder="Rechercher un objet…" oninput="onSearchInput(this.value)">
     </div>
     <div class="subcat-row" id="subcatRow"></div>
 
     <!-- Découvrir -->
     <div id="viewDiscover">
-      <button class="publish-btn" id="publishBtnMain" onclick="openPublish()">📷 Publier un objet</button>
+      <button class="publish-btn" id="publishBtnMain" onclick="openPublish()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier un objet</button>
       <div class="stack" id="stack"></div>
       <div class="search-results hidden" id="searchResults"></div>
       <div class="swbar">
@@ -308,7 +308,7 @@
         </div>
         <div class="swbar-ticks"><span>15 min</span><span>2h</span><span>4h</span><span>8h</span></div>
         <div class="swbar-actions">
-          <button class="btn-pass2" onclick="passTop()">✕</button>
+          <button class="btn-pass2" onclick="passTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
           <button class="btn-reserve" onclick="reserveTop()">Je réserve</button>
         </div>
       </div>
@@ -317,8 +317,8 @@
     <!-- Mes objets -->
     <div id="viewMine" class="hidden">
       <div class="segmented" id="mineTabs" style="margin:12px 18px;">
-        <button class="seg-btn active" id="mineTabAnnonces" onclick="setMineTab('annonces')">📦 Mes annonces</button>
-        <button class="seg-btn" id="mineTabReservations" onclick="setMineTab('reservations')">🎁 Mes réservations</button>
+        <button class="seg-btn active" id="mineTabAnnonces" onclick="setMineTab('annonces')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg> Mes annonces</button>
+        <button class="seg-btn" id="mineTabReservations" onclick="setMineTab('reservations')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M3 11.5h14"/><path d="M10 8v9"/><path d="M10 8C8 8 6.8 6.8 7 5.3 7.2 4 8.7 3.6 9.4 4.6c.4.6.6 1.6.6 3.4zM10 8c2 0 3.2-1.2 3-2.7-.2-1.3-1.7-1.7-2.4-.7-.4.6-.6 1.6-.6 3.4z"/></svg> Mes réservations</button>
       </div>
       <div id="mineContent" style="padding:0 18px;"></div>
     </div>
@@ -341,9 +341,9 @@
         </span>
         <span>Découvrir</span>
       </button>
-      <button class="navbtn" id="navMine" onclick="switchView('mine')">📦<span>Mes objets</span></button>
-      <button class="navbtn" id="navNotifs" onclick="switchView('notifs')">🔔<span>Notifs<span class="badge hidden" id="notifBadge">0</span></span></button>
-      <button class="navbtn" id="navProfile" onclick="switchView('profile')">👤<span>Profil</span></button>
+      <button class="navbtn" id="navMine" onclick="switchView('mine')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg><span>Mes objets</span></button>
+      <button class="navbtn" id="navNotifs" onclick="switchView('notifs')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8z"/><path d="M8.2 16a1.8 1.8 0 0 0 3.6 0"/></svg><span>Notifs<span class="badge hidden" id="notifBadge">0</span></span></button>
+      <button class="navbtn" id="navProfile" onclick="switchView('profile')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c.8-3.8 3.6-5.8 6.5-5.8s5.7 2 6.5 5.8"/></svg><span>Profil</span></button>
     </div>
   </div>
 
@@ -352,7 +352,7 @@
     <div class="sheet">
       <div class="sheet-head">
         <div class="sheet-title">Nouvel objet</div>
-        <button class="x-btn" onclick="closePublish()">✕</button>
+        <button class="x-btn" onclick="closePublish()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <div id="publishBody"></div>
     </div>
@@ -363,7 +363,7 @@
     <div class="sheet">
       <div class="sheet-head">
         <div class="sheet-title">⏱️ Dans combien de temps ?</div>
-        <button class="x-btn" onclick="closeDelaySheet(null)">✕</button>
+        <button class="x-btn" onclick="closeDelaySheet(null)"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;">Dans combien de temps viens-tu chercher l'objet ?</p>
       <div class="chip-row">
@@ -380,7 +380,7 @@
 
   <!-- Visionneuse photo -->
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImgLightbox()">
-    <button class="img-lightbox-close" onclick="closeImgLightbox()">✕</button>
+    <button class="img-lightbox-close" onclick="closeImgLightbox()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
     <img id="imgLightboxSrc" src="" alt="">
   </div>
 
@@ -388,8 +388,8 @@
   <div class="overlay hidden" id="locOverlay">
     <div class="sheet">
       <div class="sheet-head">
-        <div class="sheet-title">📍 Ma localisation</div>
-        <button class="x-btn" onclick="closeLocationSheet()">✕</button>
+        <div class="sheet-title"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 18s6-5.6 6-10.4A6 6 0 0 0 4 7.6C4 12.4 10 18 10 18z"/><circle cx="10" cy="7.5" r="2.1"/></svg> Ma localisation</div>
+        <button class="x-btn" onclick="closeLocationSheet()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <p style="font-size:12px; color:rgba(43,33,64,0.6); margin-top:0;">Utilisée pour tes annonces et pour indiquer où venir chercher tes objets.</p>
       <label>Adresse</label>
@@ -399,7 +399,7 @@
 
       <div class="section-title" style="margin-top:18px;">Vérification GPS</div>
       <div id="locVerifiedBox"></div>
-      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="verifyLocGPS()">📍 Vérifier avec ma position GPS</button>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="verifyLocGPS()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 18s6-5.6 6-10.4A6 6 0 0 0 4 7.6C4 12.4 10 18 10 18z"/><circle cx="10" cy="7.5" r="2.1"/></svg> Vérifier avec ma position GPS</button>
       <div id="locVerifyMsg"></div>
       <div id="locVerifyConfirm"></div>
     </div>
@@ -410,7 +410,7 @@
     <div class="story-bg"></div>
     <div class="story-top">
       <div class="story-bars" id="storyBars"></div>
-      <button class="story-close" onclick="closeStory()">✕</button>
+      <button class="story-close" onclick="closeStory()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
     </div>
     <div class="story-stage" id="storyStage">
       <img id="storyImg" src="" alt="">
@@ -418,7 +418,7 @@
     <div class="story-info">
       <div class="story-name" id="storyName"></div>
       <div class="story-meta" id="storyMeta"></div>
-      <button class="story-reserve" id="storyReserveBtn" onclick="storyReserve()">🎁 Je réserve cet objet</button>
+      <button class="story-reserve" id="storyReserveBtn" onclick="storyReserve()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M3 11.5h14"/><path d="M10 8v9"/><path d="M10 8C8 8 6.8 6.8 7 5.3 7.2 4 8.7 3.6 9.4 4.6c.4.6.6 1.6.6 3.4zM10 8c2 0 3.2-1.2 3-2.7-.2-1.3-1.7-1.7-2.4-.7-.4.6-.6 1.6-.6 3.4z"/></svg> Je réserve cet objet</button>
     </div>
   </div>
 
@@ -438,6 +438,23 @@
 </div>
 
 <script>
+// ================= ICÔNES (jeu d'icônes cohérent, style ligne fine) =================
+const ICON = {
+  close:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>`,
+  pin:        `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 18s6-5.6 6-10.4A6 6 0 0 0 4 7.6C4 12.4 10 18 10 18z"/><circle cx="10" cy="7.5" r="2.1"/></svg>`,
+  box:        `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg>`,
+  bell:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M5 8a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S5 12 5 8z"/><path d="M8.2 16a1.8 1.8 0 0 0 3.6 0"/></svg>`,
+  gift:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="8" width="14" height="9" rx="1.5"/><path d="M3 11.5h14"/><path d="M10 8v9"/><path d="M10 8C8 8 6.8 6.8 7 5.3 7.2 4 8.7 3.6 9.4 4.6c.4.6.6 1.6.6 3.4zM10 8c2 0 3.2-1.2 3-2.7-.2-1.3-1.7-1.7-2.4-.7-.4.6-.6 1.6-.6 3.4z"/></svg>`,
+  food:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M13.2 4.5c-.8-1-2-1.3-2.9-.6"/><path d="M10 6.2C7 5.6 4.5 8 4.8 11.3 5.1 14.8 7.6 17.5 10 17.5s4.9-2.7 5.2-6.2C15.5 8 13 5.6 10 6.2z"/></svg>`,
+  camera:     `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg>`,
+  lock:       `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="4.5" y="9" width="11" height="8" rx="1.5"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/></svg>`,
+  warning:    `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10 3.5l8 14H2l8-14z"/><path d="M10 8.5v3.5"/><circle cx="10" cy="14.5" r="0.15" fill="currentColor" stroke-width="2.2"/></svg>`,
+  search:     `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-2px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M16.5 16.5l-4-4"/></svg>`,
+  user:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c.8-3.8 3.6-5.8 6.5-5.8s5.7 2 6.5 5.8"/></svg>`,
+  trash:      `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6h12"/><path d="M8 6V4.5h4V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/></svg>`,
+  award:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="7.5" r="4.5"/><path d="M7.3 11.5L6 17.5l4-2 4 2-1.3-6"/></svg>`,
+  map:        `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M7 4L3 5.5v11L7 15l6 2 4-1.5v-11L13 6z"/><path d="M7 4v11M13 6v11"/></svg>`,
+};
 // ================= CONFIG SUPABASE =================
 const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xd21vaW15d3BjZWR6bHF5cWZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MjgwNTgsImV4cCI6MjEwMzMwNDA1OH0.EZa53zL3fd2mS6XB0XUw1gcAvtI5thh58vg_8mDrtdg";
@@ -514,7 +531,7 @@ function renderLocVerifiedBox(){
   const box = document.getElementById('locVerifiedBox');
   box.innerHTML = currentProfile?.address_verified
     ? `<div class="msg ok">✓ Adresse vérifiée par GPS le ${currentProfile.verified_at ? new Date(currentProfile.verified_at).toLocaleDateString('fr-FR') : ''}
-         <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Voir sur Google Maps</a>
+         <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">${ICON.map} Voir sur Google Maps</a>
        </div>`
     : `<p style="font-size:11.5px; color:rgba(43,33,64,0.6);">Pas encore vérifiée — confirme ta position GPS pour rassurer les autres membres.</p>`;
 }
@@ -547,8 +564,8 @@ function verifyLocGPS(){
     msg.innerHTML = '';
     confirmBox.innerHTML = `
       <div class="val-card">
-        📍 Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
-        <a href="https://www.google.com/maps?q=${pendingLocGPS.lat},${pendingLocGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">🗺️ Voir cette position sur Google Maps</a>
+        ${ICON.pin} Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
+        <a href="https://www.google.com/maps?q=${pendingLocGPS.lat},${pendingLocGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">${ICON.map} Voir cette position sur Google Maps</a>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <button class="btn btn-ghost" style="flex:1;" onclick="cancelLocGPS()">Annuler</button>
           <button class="btn btn-teal" style="flex:1;" onclick="confirmLocGPS()">✓ C'est bien ma position</button>
@@ -684,11 +701,11 @@ async function onLoggedIn(user){
 const tourSteps = [
   { view:'discover', target:null, title:"Bienvenue 👋", text:"On te montre tout en quelques secondes. Tape n'importe où pour avancer." },
   { view:'discover', target:'#stack', title:"👉 Glisse la carte", text:"À droite pour réserver, à gauche pour passer. Tape la photo pour l'agrandir." },
-  { view:'discover', target:'#publishBtnMain', title:"📷 Publier", text:"Un clic, une photo, c'est en ligne." },
-  { view:'discover', target:'#segmentedBar', title:"📦 🍎 Catégories", text:"Objets ou nourriture, tu bascules ici." },
-  { view:'mine', target:'#mineTabs', title:"📦 Mes objets", text:"Tes annonces et tes réservations, bien séparées." },
-  { view:'notifs', target:'#navNotifs', title:"🔔 Notifs", text:"Réservation reçue, adresse validée : tout arrive ici." },
-  { view:'profile', target:'#verifyGPSBtn', title:"📍 Adresse vérifiée", text:"Confirme ta position GPS pour rassurer les autres membres." },
+  { view:'discover', target:'#publishBtnMain', title:`${ICON.camera} Publier`, text:"Un clic, une photo, c'est en ligne." },
+  { view:'discover', target:'#segmentedBar', title:`${ICON.box} ${ICON.food} Catégories`, text:"Objets ou nourriture, tu bascules ici." },
+  { view:'mine', target:'#mineTabs', title:`${ICON.box} Mes objets`, text:"Tes annonces et tes réservations, bien séparées." },
+  { view:'notifs', target:'#navNotifs', title:`${ICON.bell} Notifs`, text:"Réservation reçue, adresse validée : tout arrive ici." },
+  { view:'profile', target:'#verifyGPSBtn', title:`${ICON.pin} Adresse vérifiée`, text:"Confirme ta position GPS pour rassurer les autres membres." },
   { view:'discover', target:null, title:"C'est tout ! 🎉", text:"Amuse-toi bien et merci de donner une seconde vie à tes objets !" },
 ];
 let tourIndex = 0;
@@ -703,7 +720,7 @@ function startTour(){
 function renderTourStep(){
   const step = tourSteps[tourIndex];
   switchView(step.view);
-  document.getElementById('tourTitle').textContent = step.title;
+  document.getElementById('tourTitle').innerHTML = step.title;
   document.getElementById('tourText').textContent = step.text;
   document.getElementById('tourDots').innerHTML = tourSteps.map((_,i) =>
     `<div class="${i<tourIndex?'done':''} ${i===tourIndex?'active':''}"></div>`
@@ -939,7 +956,7 @@ function applyFilters(){
       ${it.photo_url ? `<img src="${it.photo_url}" alt="">` : ''}
       <div class="card-body">
         <div class="card-title">${it.name}</div>
-        <div class="card-meta">📍 ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}</div>
+        <div class="card-meta">${ICON.pin} ${owner.name||'Un membre'} · ${fmtKm(dist)}${it.subcategory ? ' · '+it.subcategory : ''}</div>
         <button class="btn btn-teal" style="width:100%; margin-top:8px;" onclick="reserveFromList('${it.id}')">Je réserve</button>
       </div>
     </div>`;
@@ -970,8 +987,8 @@ function renderStack(){
     el.className = 'swcard ' + (offset===0 ? 'front' : offset===1 ? 'behind' : 'behind2');
     el.innerHTML = `
       <div class="swart">
-        ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">📦</div>`}
-        <div class="sw-loc">📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}</div>
+        ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">${ICON.box}</div>`}
+        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}</div>
         <div class="sw-free">GRATUIT</div>
         <div class="sw-hint like">JE RÉSERVE</div>
         <div class="sw-hint pass">JE PASSE</div>
@@ -1234,7 +1251,7 @@ async function submitPublish(){
   if(!currentUser) return;
   const msg = document.getElementById('pubMsg');
   if(!currentProfile?.address_verified){
-    msg.innerHTML = `<div class="msg err">⚠️ Confirme d'abord ton adresse exacte avec ta position GPS (📍 en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
+    msg.innerHTML = `<div class="msg err">${ICON.warning} Confirme d'abord ton adresse exacte avec ta position GPS (${ICON.pin} en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
     return;
   }
   if(category==='objets' && !pub.subcategory){
@@ -1324,23 +1341,23 @@ function renderMine(){
 
       if(res && res.donor_validated){
         statusLabel = 'À RÉCUPÉRER'; statusClass = 'pending';
-        action = `<div class="val-card">📍 Adresse envoyée, en attente que la personne vienne chercher l'objet.<br>
+        action = `<div class="val-card">${ICON.pin} Adresse envoyée, en attente que la personne vienne chercher l'objet.<br>
           <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}','${it.category}')">✓ Confirmer que l'objet a été récupéré</button>
         </div>`;
       } else if(res && !res.donor_validated){
         statusLabel = 'RÉSERVÉ'; statusClass = 'pending';
         const verified = currentProfile?.address_verified;
-        const addrWarning = verified ? '' : `<div style="font-size:10.5px; color:#B24C34; margin-top:4px;">⚠️ Ton adresse n'est pas encore vérifiée par GPS (Profil → Vérifier mon adresse)</div>`;
-        action = `<div class="val-card">🔔 Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
+        const addrWarning = verified ? '' : `<div style="font-size:10.5px; color:#B24C34; margin-top:4px;">${ICON.warning} Ton adresse n'est pas encore vérifiée par GPS (Profil → Vérifier mon adresse)</div>`;
+        action = `<div class="val-card">${ICON.bell} Quelqu'un a réservé cet objet !${addrWarning}<br><button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="validateReservation('${res.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Valider et envoyer mon adresse</button></div>`;
       } else if(it.status === 'retire'){
         statusLabel = 'RETIRÉ'; statusClass = 'offline';
       } else {
         statusLabel = 'EN LIGNE'; statusClass = 'online';
-        action = `<button class="withdraw-btn" onclick="withdrawItem('${it.id}')">🗑️ Retirer l'annonce</button>`;
+        action = `<button class="withdraw-btn" onclick="withdrawItem('${it.id}')">Retirer l'annonce</button>`;
       }
 
       const thumb = `<div class="thumb-wrap">
-        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty">📦</div>`}
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
       </div>`;
 
       return `
@@ -1369,13 +1386,13 @@ function renderMine(){
       const statusLabel = done ? 'RÉCUPÉRÉ' : (r.donor_validated ? 'À RÉCUPÉRER' : 'EN ATTENTE');
       const statusClass = done ? 'offline' : (r.donor_validated ? 'pending' : 'pending');
       const thumb = `<div class="thumb-wrap">
-        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty">📦</div>`}
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
         ${done ? `<div class="mini-ribbon"></div>` : ''}
       </div>`;
       let addrBlock = '';
       if(r.donor_validated){
-        const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Maps</a>` : '';
-        addrBlock = `<div class="item-extra"><div class="addr-line">📍 ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>` : ''}</div>`;
+        const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">${ICON.map} Maps</a>` : '';
+        addrBlock = `<div class="item-extra"><div class="addr-line">${ICON.pin} ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>` : ''}</div>`;
       }
       return `
         <div class="item-row">
@@ -1424,24 +1441,24 @@ async function validateReservation(resId, itemId, itemName){
 }
 
 // ================= NOTIFICATIONS =================
-const notifIcons = { reservation_incoming:'🔔', address:'📍', won:'🏆' };
+const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award };
 async function loadNotifs(){
   const el = document.getElementById('viewNotifs');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
   const { data: notifs } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).eq('read', false).order('created_at',{ascending:false});
   if(!notifs || notifs.length===0){
-    el.innerHTML = `<div class="section-title">🔔 Notifications</div><div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
+    el.innerHTML = `<div class="section-title">${ICON.bell} Notifications</div><div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
     return;
   }
-  el.innerHTML = `<div class="section-title">🔔 Notifications</div>` + notifs.map(n => `
+  el.innerHTML = `<div class="section-title">${ICON.bell} Notifications</div>` + notifs.map(n => `
     <div class="notif-card" id="notif-${n.id}">
       <div class="notif-head">
-        <div class="notif-thumb">${notifIcons[n.type] || '🔔'}</div>
+        <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
         <div style="flex:1;">
           <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : 'Notification'}</div>
           <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
         </div>
-        <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">✕</button>
+        <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
       </div>
       <div class="notif-msg">${n.message}</div>
       ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
@@ -1482,7 +1499,7 @@ function renderProfile(){
     <div class="section-title">Alertes</div>
     ${(typeof Notification!=='undefined' && Notification.permission==='granted')
       ? `<div class="msg ok">✓ Alertes activées sur ce téléphone</div>`
-      : `<button class="publish-btn" style="width:100%;" onclick="askNotifPermission()">🔔 Activer les alertes sur ce téléphone</button>
+      : `<button class="publish-btn" style="width:100%;" onclick="askNotifPermission()">${ICON.bell} Activer les alertes sur ce téléphone</button>
          <p style="font-size:11px; color:rgba(43,33,64,0.5); margin-top:8px;">Fonctionne tant que Toc Toc reste ouvert (même en arrière-plan). Autorise les notifications quand ton téléphone te le demande.</p>`}
 
     <div class="section-title">Mes données personnelles</div>
@@ -1498,10 +1515,10 @@ function renderProfile(){
     <div class="section-title">Vérification de l'adresse</div>
     ${currentProfile?.address_verified
       ? `<div class="msg ok">✓ Adresse vérifiée par GPS le ${currentProfile.verified_at ? new Date(currentProfile.verified_at).toLocaleDateString('fr-FR') : ''}
-           <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">🗺️ Voir sur Google Maps</a>
+           <br><a href="https://www.google.com/maps?q=${currentProfile.lat},${currentProfile.lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">${ICON.map} Voir sur Google Maps</a>
          </div>`
       : `<p style="font-size:11.5px; color:rgba(43,33,64,0.6); margin-bottom:8px;">N'importe qui peut taper une adresse au hasard. Pour rassurer les autres membres, confirme que tu es réellement à cette adresse avec ta position GPS.</p>`}
-    <button class="btn btn-ghost" id="verifyGPSBtn" style="width:100%; margin-top:8px;" onclick="verifyAddressGPS()">📍 Vérifier mon adresse avec ma position GPS</button>
+    <button class="btn btn-ghost" id="verifyGPSBtn" style="width:100%; margin-top:8px;" onclick="verifyAddressGPS()">${ICON.pin} Vérifier mon adresse avec ma position GPS</button>
     <div id="verifyMsg"></div>
     <div id="verifyConfirm"></div>
 
@@ -1542,8 +1559,8 @@ function verifyAddressGPS(){
     msg.innerHTML = '';
     confirmBox.innerHTML = `
       <div class="val-card">
-        📍 Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
-        <a href="https://www.google.com/maps?q=${pendingGPS.lat},${pendingGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">🗺️ Voir cette position sur Google Maps</a>
+        ${ICON.pin} Position détectée avec une précision d'environ ${Math.round(pos.coords.accuracy)} m.<br>
+        <a href="https://www.google.com/maps?q=${pendingGPS.lat},${pendingGPS.lng}" target="_blank" style="color:var(--purple); font-weight:700; font-size:12px;">${ICON.map} Voir cette position sur Google Maps</a>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <button class="btn btn-ghost" style="flex:1;" onclick="cancelGPSVerify()">Annuler</button>
           <button class="btn btn-teal" style="flex:1;" onclick="confirmGPSVerify()">✓ C'est bien ma position</button>
