@@ -144,11 +144,11 @@
   .swart img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .swart .noimg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:40px; }
   .sw-loc{ position:absolute; top:12px; left:12px; background:var(--ink); color:#fff; font-family:'Space Mono',monospace; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; }
-  .countdown-badge{ display:inline-flex; align-items:center; gap:4px; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; }
-  .countdown-badge.expiring{ color:#D98E1F; }
-  .countdown-badge.expired{ color:var(--coral); }
-  .countdown-pill{ position:absolute; top:52px; right:12px; background:rgba(20,14,36,0.72); color:#fff; padding:6px 10px; border-radius:8px; z-index:4; }
-  .countdown-pill .countdown-badge{ color:#fff; }
+  .countdown-badge{ display:inline-flex; align-items:center; gap:4px; font-family:'Space Mono',monospace; font-weight:700; font-size:12px; padding:4px 10px; border-radius:8px; border:1.5px solid var(--color-brand-interactive); background:#F2ECFF; color:var(--color-brand-interactive); }
+  .countdown-badge.expiring{ border-color:#D98E1F; background:#FBF0DD; color:#D98E1F; }
+  .countdown-badge.expired{ border-color:var(--coral); background:#FBEAE8; color:var(--coral); }
+  .countdown-pill{ position:absolute; top:52px; right:12px; background:rgba(20,14,36,0.78); color:#fff; padding:7px 12px; border-radius:8px; z-index:4; border:1.5px solid rgba(255,255,255,0.55); }
+  .countdown-pill .countdown-badge{ border:none; background:none; padding:0; color:#fff; font-size:12.5px; }
   .countdown-pill .countdown-badge.expiring{ color:#FFC93C; }
   .countdown-pill .countdown-badge.expired{ color:#FF8A80; }
   .sw-free{ position:absolute; top:12px; right:12px; background:var(--yellow); color:var(--ink); font-family:'Work Sans',sans-serif; font-weight:600; font-size:11px; padding:6px 10px; border-radius:8px; z-index:4; }
@@ -254,7 +254,9 @@
   .nav-logo-circle svg{ width:16px; height:16px; }
   .badge{ position:relative; top:-2px; background:var(--coral); color:#fff; font-size:9px; border-radius:100px; padding:1px 5px; margin-left:3px; }
   .notif-bell-btn{ position:relative; width:38px; height:38px; border-radius:50%; border:1px solid var(--color-border-default); background:var(--paper); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; }
-  .notif-dot{ position:absolute; top:6px; right:7px; width:9px; height:9px; border-radius:50%; background:var(--coral); border:1.5px solid var(--paper); }
+  .notif-dot{ position:absolute; top:2px; right:2px; width:15px; height:15px; border-radius:50%; background:var(--coral); border:2px solid var(--paper); box-shadow:0 0 0 2px rgba(255,90,95,0.35); animation:notifPulse 1.8s ease-in-out infinite; }
+  @keyframes notifPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.18); } }
+  @media (prefers-reduced-motion: reduce){ .notif-dot{ animation:none; } }
 
   .val-card{ background:#F2ECFF; border:2px dashed var(--purple); border-radius:14px; padding:12px; margin-top:8px; font-size:12px; }
   .chat-bubble{ max-width:78%; padding:8px 12px; border-radius:14px; font-size:13px; line-height:1.35; }
@@ -1019,6 +1021,8 @@ function setCategory(c){
   document.getElementById('segNourriture').classList.toggle('active', c==='nourriture');
   document.getElementById('segTroc').classList.toggle('active', c==='troc');
   document.getElementById('swReserveBtn').innerHTML = c==='troc' ? `${ICON.swap} Je propose un objet` : `${ICON.gift} Je réserve`;
+  const publishLabel = c==='troc' ? `${ICON.swap} Proposer un troc` : c==='nourriture' ? `${ICON.food} Publier de la nourriture` : `${ICON.camera} Publier un objet`;
+  document.getElementById('publishBtnMain').innerHTML = publishLabel;
   feedIndex = 0;
   searchTerm = '';
   activeSubcat = 'Toutes';
