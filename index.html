@@ -136,6 +136,12 @@
   /* Swipe stack */
   .stack{ position:relative; height:420px; margin:0 18px 14px; }
   .swcard{ position:absolute; inset:0; background:var(--paper); border:1px solid var(--color-border-default); border-radius:18px; overflow:hidden; display:flex; flex-direction:column; transition:transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s; cursor:grab; user-select:none; }
+  .swcard.end-card{ cursor:default; align-items:center; justify-content:center; background:linear-gradient(160deg, #F2ECFF, var(--paper) 65%); }
+  .end-card-inner{ padding:28px 26px; text-align:center; width:100%; }
+  .end-card-icon{ width:56px; height:56px; margin:0 auto 14px; border-radius:50%; background:var(--color-brand-interactive); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .end-card-icon svg{ width:26px; height:26px; }
+  .end-card-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:19px; color:var(--ink); margin-bottom:6px; }
+  .end-card-text{ font-size:13px; color:var(--color-text-secondary); line-height:1.4; margin:0 0 18px; }
   .swcard:active{ cursor:grabbing; }
   .swcard.behind{ transform:scale(0.95) translateY(12px); z-index:1; }
   .swcard.behind2{ transform:scale(0.90) translateY(24px); z-index:0; opacity:0.85; }
@@ -1299,15 +1305,29 @@ function renderStack(){
     stack.innerHTML = `<div class="empty">Plus rien pour l'instant dans cette catégorie.<br>Reviens plus tard ou change de rayon.</div>`;
     return;
   }
-  if(feedIndex >= feedItems.length){
-    feedIndex = 0; // on reboucle : toujours des annonces à voir, même si ce sont les mêmes
-  }
   [2,1,0].forEach(offset=>{
-    const i = (feedIndex + offset) % feedItems.length;
+    const i = feedIndex + offset;
+    const el = document.createElement('div');
+
+    if(i >= feedItems.length){
+      if(offset !== 0) return; // pas de carte "derrière" en double : une seule carte de fin, au premier plan
+      el.className = 'swcard end-card front';
+      el.innerHTML = `
+        <div class="end-card-inner">
+          <div class="end-card-icon">${ICON.gift}</div>
+          <div class="end-card-title">Tu as tout vu !</div>
+          <p class="end-card-text">Publie un objet pour que d'autres en profitent, ou repars depuis le début.</p>
+          <button class="btn btn-teal" style="width:100%;" onclick="openPublish()">${ICON.camera} Publier un objet</button>
+          <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="restartStack()">${ICON.swap} Revenir au début</button>
+        </div>
+      `;
+      stack.appendChild(el);
+      return;
+    }
+
     const it = feedItems[i];
     const owner = ownerMap[it.owner_id] || {};
     const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
-    const el = document.createElement('div');
     el.className = 'swcard ' + (offset===0 ? 'front' : offset===1 ? 'behind' : 'behind2');
     el.innerHTML = `
       <div class="swart">
@@ -1329,11 +1349,12 @@ function renderStack(){
   });
 }
 
+function restartStack(){ feedIndex = 0; renderStack(); }
+
 function addDrag(card){
   let startX=0, dx=0, dragging=false;
   const likeHint = card.querySelector('.sw-hint.like');
   const passHint = card.querySelector('.sw-hint.pass');
-  function onDown(x){ dragging=true; startX=x; card.style.transition='none'; }
   function onMove(x){
     if(!dragging) return;
     dx = x-startX;
@@ -1341,18 +1362,24 @@ function addDrag(card){
     likeHint.style.opacity = Math.max(0, dx/60);
     passHint.style.opacity = Math.max(0, -dx/60);
   }
+  function onMouseMove(e){ onMove(e.clientX); }
   function onUp(){
     if(!dragging) return;
     dragging=false;
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onUp);
     card.style.transition='transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s';
     if(dx > 90) handleReserveIntent(card);
     else if(dx < -90) swipeAway(card, -1);
     else { card.style.transform=''; likeHint.style.opacity=0; passHint.style.opacity=0; }
   }
-  card.addEventListener('mousedown', e=>onDown(e.clientX));
-  window.addEventListener('mousemove', e=>onMove(e.clientX));
-  window.addEventListener('mouseup', onUp);
-  card.addEventListener('touchstart', e=>onDown(e.touches[0].clientX), {passive:true});
+  function onMouseDown(e){
+    dragging=true; startX=e.clientX; dx=0; card.style.transition='none';
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onUp);
+  }
+  card.addEventListener('mousedown', onMouseDown);
+  card.addEventListener('touchstart', e=>{ dragging=true; startX=e.touches[0].clientX; dx=0; card.style.transition='none'; }, {passive:true});
   card.addEventListener('touchmove', e=>onMove(e.touches[0].clientX), {passive:true});
   card.addEventListener('touchend', onUp);
 }
@@ -1448,11 +1475,11 @@ async function confirmReserveFlow(item){
 
 function passTop(){
   const card = document.querySelector('#stack .swcard.front');
-  if(card) swipeAway(card, -1);
+  if(card && !card.classList.contains('end-card')) swipeAway(card, -1);
 }
 async function reserveTop(){
   const card = document.querySelector('#stack .swcard.front');
-  if(card) await handleReserveIntent(card);
+  if(card && !card.classList.contains('end-card')) await handleReserveIntent(card);
 }
 
 // ================= STORY PLEIN ÉCRAN =================
