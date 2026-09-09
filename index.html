@@ -1824,6 +1824,7 @@ async function reserveItem(itemId, durationMinutes, offeredItemId){
     await sb.from('notifications').insert({
       user_id: itemRow.owner_id,
       type: 'reservation_incoming',
+      ref_id: itemId,
       message
     });
   }
@@ -2231,6 +2232,7 @@ async function validateReservation(resId, itemId, itemName){
   await sb.from('notifications').insert({
     user_id: res.receiver_id,
     type: 'address',
+    ref_id: itemId,
     message: `C'est validé, tu peux y aller ! Adresse pour venir chercher "${itemName}" : ${address || 'à demander au donneur'}${verifBadge}. Tu as ${fmtCountdown(minutes*60000)} pour passer le récupérer.`
   });
   loadMine();
@@ -2301,6 +2303,7 @@ async function sendTrocMessage(){
     await sb.from('notifications').insert({
       user_id: chatOtherId,
       type: 'message',
+      ref_id: chatReservationId,
       message: `Nouveau message dans votre discussion troc : "${content.slice(0,60)}${content.length>60?'…':''}"`
     });
   }
@@ -2320,23 +2323,38 @@ async function loadNotifs(){
     el.innerHTML = `<div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
   } else {
     el.innerHTML = notifs.map(n => `
-      <div class="notif-card" id="notif-${n.id}">
+      <div class="notif-card" id="notif-${n.id}" style="cursor:pointer;" onclick="handleNotifClick('${n.id}','${n.type}','${n.ref_id||''}')">
         <div class="notif-head">
           <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
           <div style="flex:1;">
             <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : n.type==='alert' ? 'Alerte' : 'Notification'}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
           </div>
-          <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
+          <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="event.stopPropagation(); dismissNotif('${n.id}')">${ICON.close}</button>
         </div>
         <div class="notif-msg">${n.message}</div>
-        ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
+        ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="event.stopPropagation(); dismissNotif('${n.id}'); switchView('mine'); document.getElementById('notifsOverlay').classList.add('hidden');">Valider maintenant →</button>` : ''}
       </div>
     `).join('');
   }
   // marque comme lu : le petit rond disparaît tout de suite, mais la notification reste visible ici 12h
   await sb.from('notifications').update({ read:true, read_at:new Date().toISOString() }).eq('user_id', currentUser.id).eq('read', false);
   updateNotifBadge();
+}
+async function handleNotifClick(id, type, refId){
+  document.getElementById('notifsOverlay').classList.add('hidden');
+  if(type === 'message' && refId){
+    const { data: res } = await sb.from('reservations').select('*').eq('id', refId).single();
+    if(res){
+      const { data: item } = await sb.from('items').select('owner_id').eq('id', res.item_id).single();
+      const otherId = (item && currentUser.id === res.receiver_id) ? item.owner_id : res.receiver_id;
+      const { data: otherProfile } = await sb.from('profiles').select('name').eq('id', otherId).single();
+      openTrocChat(refId, otherId, otherProfile?.name || 'la personne');
+      return;
+    }
+  }
+  if(type === 'alert'){ switchView('discover'); return; }
+  switchView('mine');
 }
 async function dismissNotif(id){
   await sb.from('notifications').delete().eq('id', id);
@@ -2360,6 +2378,22 @@ async function renderProfile(){
   const { count: givenCount } = await sb.from('items').select('id', {count:'exact', head:true}).eq('owner_id', currentUser.id).eq('status','attribue');
   const { count: receivedCount } = await sb.from('reservations').select('id', {count:'exact', head:true}).eq('receiver_id', currentUser.id).eq('donor_validated', true);
 
+  const { data: myReceivedRatings } = await sb.from('ratings').select('*').eq('rated_id', currentUser.id).order('created_at',{ascending:false});
+  let ratingsHtml = `<div class="empty">Pas encore d'avis reçu.</div>`;
+  if(myReceivedRatings && myReceivedRatings.length){
+    const raterIds = [...new Set(myReceivedRatings.map(r=>r.rater_id))];
+    const { data: raters } = await sb.from('profiles').select('id,name').in('id', raterIds);
+    const raterMap = Object.fromEntries((raters||[]).map(p=>[p.id,p.name]));
+    ratingsHtml = myReceivedRatings.map(r => `
+      <div class="item-row" style="align-items:flex-start;">
+        <div class="info">
+          <div class="item-name">${raterMap[r.rater_id] || 'Un membre'} <span class="rating-stars">${[1,2,3,4,5].map(n=>n<=r.stars?ICON.star:ICON.starOutline).join('')}</span></div>
+          ${r.comment ? `<div class="item-sub" style="white-space:normal;">${r.comment}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
   el.innerHTML = `
     <div class="profile-head">
       <div class="profile-avatar">${initials}</div>
@@ -2375,6 +2409,9 @@ async function renderProfile(){
       <div class="impact-card"><div class="impact-num">${givenCount||0}</div><div class="impact-label">objet${givenCount>1?'s':''} donné${givenCount>1?'s':''}</div></div>
       <div class="impact-card"><div class="impact-num">${receivedCount||0}</div><div class="impact-label">objet${receivedCount>1?'s':''} reçu${receivedCount>1?'s':''}</div></div>
     </div>
+
+    <div class="section-title">Avis reçus</div>
+    ${ratingsHtml}
 
     <div class="section-title">Installer l'application</div>
     <p style="font-size:11.5px; color:rgba(43,33,64,0.6); margin-top:0;">Pas de bouton d'installation automatique ? Cherche <strong>"Ajouter à l'écran d'accueil"</strong> ou <strong>"Installer"</strong> dans le menu de ton navigateur (souvent les trois points, ou le bouton Partager sur iPhone). Toc Toc s'ouvrira alors comme une vraie appli, avec son icône.</p>
