@@ -179,6 +179,7 @@
   .btn-reserve:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.2); }
 
   .auth-wrap{ padding:40px 24px; display:flex; flex-direction:column; gap:10px; }
+  .install-app-btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:calc(100% - 48px); margin:-6px 24px 24px; padding:13px; border-radius:14px; border:1.5px dashed var(--color-brand-interactive); background:#F2ECFF; color:var(--color-brand-interactive); font-family:'Work Sans',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer; }
   .auth-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:var(--ink); text-align:center; margin-bottom:8px; }
   .terms-box{ max-height:150px; overflow-y:auto; border:1px solid var(--color-border-default); border-radius:12px; padding:10px 12px; margin-top:14px; background:var(--color-surface-subtle); font-size:11px; line-height:1.5; color:var(--color-text-secondary); }
   .terms-box p{ margin:0 0 10px; }
@@ -319,6 +320,10 @@
 
   <!-- Auth -->
   <div id="authView" class="auth-wrap hidden"></div>
+  <button id="installAppBtn" class="install-app-btn hidden" onclick="promptInstallApp()">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 15v1.5A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+    Installer l'application
+  </button>
 
   <!-- Main app -->
   <!-- Validation rétroactive des conditions (comptes créés avant leur ajout) -->
@@ -1005,6 +1010,7 @@ async function onLoggedIn(user){
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   currentProfile = profile;
   document.getElementById('authView').classList.add('hidden');
+  document.getElementById('installAppBtn').classList.add('hidden');
   document.getElementById('userPill').textContent = "✓ " + (profile?.name?.split(' ')[0] || 'Connecté');
 
   if(profile && !profile.terms_accepted_at){
@@ -1179,6 +1185,7 @@ async function doLogout(){
   document.getElementById('mainView').classList.add('hidden');
   document.getElementById('termsGateOverlay').classList.add('hidden');
   document.getElementById('authView').classList.remove('hidden');
+  if(deferredInstallPrompt && !isStandaloneAlready) document.getElementById('installAppBtn').classList.remove('hidden');
   authMode = 'login'; renderAuth();
 }
 
@@ -2369,6 +2376,9 @@ async function renderProfile(){
       <div class="impact-card"><div class="impact-num">${receivedCount||0}</div><div class="impact-label">objet${receivedCount>1?'s':''} reçu${receivedCount>1?'s':''}</div></div>
     </div>
 
+    <div class="section-title">Installer l'application</div>
+    <p style="font-size:11.5px; color:rgba(43,33,64,0.6); margin-top:0;">Pas de bouton d'installation automatique ? Cherche <strong>"Ajouter à l'écran d'accueil"</strong> ou <strong>"Installer"</strong> dans le menu de ton navigateur (souvent les trois points, ou le bouton Partager sur iPhone). Toc Toc s'ouvrira alors comme une vraie appli, avec son icône.</p>
+
     <div class="section-title">Favoris et alertes</div>
     <button class="btn btn-ghost" style="width:100%;" onclick="openFavoritesOverlay()">${ICON.heartFill} Mes favoris</button>
     <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="openAlertsOverlay()">${ICON.bell} Mes alertes</button>
@@ -2520,6 +2530,27 @@ if(sb) init();
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+
+// ================= INSTALLATION PWA =================
+let deferredInstallPrompt = null;
+const isStandaloneAlready = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if(!isStandaloneAlready && !document.getElementById('authView').classList.contains('hidden')){
+    document.getElementById('installAppBtn').classList.remove('hidden');
+  }
+});
+async function promptInstallApp(){
+  if(!deferredInstallPrompt) return;
+  document.getElementById('installAppBtn').classList.add('hidden');
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+}
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installAppBtn').classList.add('hidden');
+});
 </script>
 </body>
 </html>
