@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Toc Toc — Version test connectée</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3A2E6E">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
@@ -184,6 +188,19 @@
   .terms-check input{ margin-top:2px; flex-shrink:0; width:16px; height:16px; }
   input, textarea, select{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--color-border-default); font-family:'Work Sans',sans-serif; font-size:14px; outline:none; }
   textarea{ resize:none; min-height:70px; }
+  .star-picker{ display:flex; justify-content:center; gap:8px; margin:14px 0 18px; }
+  .star-picker button{ background:none; border:none; padding:2px; cursor:pointer; color:var(--color-border-default); transition:color .15s, transform .1s; }
+  .star-picker button svg{ width:34px; height:34px; }
+  .star-picker button.active{ color:#FFC93C; transform:scale(1.08); }
+  .rating-stars{ display:inline-flex; align-items:center; gap:2px; color:#FFC93C; }
+  .rating-stars svg{ width:12px; height:12px; }
+  .rating-stars .count{ font-size:11px; color:var(--color-text-secondary); margin-left:3px; font-family:'Work Sans',sans-serif; font-weight:600; }
+  .impact-row{ display:flex; gap:10px; }
+  .impact-card{ flex:1; background:var(--color-surface-subtle); border:1px solid var(--color-border-default); border-radius:14px; padding:14px 10px; text-align:center; }
+  .impact-num{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:26px; color:var(--color-brand-interactive); }
+  .impact-label{ font-size:11px; color:var(--color-text-secondary); margin-top:2px; }
+  .fav-btn{ position:absolute; bottom:90px; right:12px; z-index:4; width:38px; height:38px; border-radius:50%; background:rgba(20,14,36,0.55); color:#fff; border:1.5px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .fav-btn.active{ color:var(--coral); background:#fff; border-color:var(--coral); }
   label{ font-family:'Work Sans',sans-serif; font-weight:600; font-size:12px; color:var(--ink); margin-top:6px; }
   .btn-main{ background:var(--purple); color:#fff; border:1px solid var(--color-border-default); padding:13px; border-radius:14px; font-family:'Work Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer; margin-top:8px; box-shadow:0 4px 0 rgba(0,0,0,0.18); transition:transform .1s, box-shadow .1s; }
   .btn-main:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
@@ -453,6 +470,61 @@
     </div>
   </div>
 
+  <!-- Mes favoris -->
+  <div class="overlay hidden" id="favoritesOverlay" style="z-index:410;">
+    <div class="sheet" style="max-height:80vh;">
+      <div class="sheet-head">
+        <div class="sheet-title">♥ Mes favoris</div>
+        <button class="x-btn" onclick="document.getElementById('favoritesOverlay').classList.add('hidden')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <div id="favoritesList"></div>
+    </div>
+  </div>
+
+  <!-- Mes alertes -->
+  <div class="overlay hidden" id="alertsOverlay" style="z-index:410;">
+    <div class="sheet" style="max-height:80vh;">
+      <div class="sheet-head">
+        <div class="sheet-title">Mes alertes</div>
+        <button class="x-btn" onclick="document.getElementById('alertsOverlay').classList.add('hidden')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <p style="font-size:12px; color:rgba(43,33,64,0.6); margin-top:0;">Reçois une notification dès qu'un objet correspondant à un mot est publié (ex: "vélo").</p>
+      <div style="display:flex; gap:8px;">
+        <input id="newAlertInput" placeholder="ex: vélo" style="flex:1; margin:0;">
+        <button class="btn btn-teal" style="flex-shrink:0; padding:0 16px;" onclick="createAlert()">Ajouter</button>
+      </div>
+      <div id="alertsList" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- Signalement -->
+  <div class="overlay hidden" id="reportOverlay" style="z-index:410;">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title" id="reportTitle">Signaler</div>
+        <button class="x-btn" onclick="closeReportOverlay()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <label>Explique-nous ce qui ne va pas</label>
+      <textarea id="reportReason" rows="3" placeholder="ex: objet dangereux, annonce trompeuse, comportement déplacé…"></textarea>
+      <button class="btn-main" style="background:var(--coral);" onclick="submitReport()">Envoyer le signalement</button>
+      <div id="reportMsg"></div>
+    </div>
+  </div>
+
+  <!-- Notation après échange -->
+  <div class="overlay hidden" id="ratingOverlay" style="z-index:400;">
+    <div class="sheet">
+      <div class="auth-title" style="font-size:18px;">Comment ça s'est passé ?</div>
+      <p id="ratingSubtitle" style="text-align:center; font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;"></p>
+      <div class="star-picker" id="starPicker"></div>
+      <label>Un commentaire (facultatif)</label>
+      <textarea id="ratingComment" rows="2" placeholder="ex: Rapide et sympa, merci !"></textarea>
+      <button class="btn-main" onclick="submitRating()">Envoyer mon avis</button>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="closeRatingOverlay()">Passer cette étape</button>
+      <div id="ratingMsg"></div>
+    </div>
+  </div>
+
   <!-- Fenêtre d'alerte stylée (remplace alert() natif) -->
   <div class="overlay hidden" id="appAlertOverlay" style="z-index:500;">
     <div class="sheet">
@@ -488,7 +560,10 @@
     <div class="sheet" style="display:flex; flex-direction:column; height:80vh; padding-bottom:12px;">
       <div class="sheet-head">
         <div class="sheet-title" id="chatTitle">Discussion</div>
-        <button class="x-btn" onclick="closeTrocChat()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+        <div style="display:flex; gap:6px;">
+          <button class="x-btn" id="chatReportBtn" onclick="reportChatPartner()" title="Signaler cette personne"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v14"/><path d="M5 4h9l-2 3 2 3H5"/></svg></button>
+          <button class="x-btn" onclick="closeTrocChat()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+        </div>
       </div>
       <div id="chatMessages" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px;"></div>
       <div style="display:flex; gap:8px; margin-top:10px;">
@@ -530,6 +605,7 @@
     <div class="story-bg"></div>
     <div class="story-top">
       <div class="story-bars" id="storyBars"></div>
+      <button class="story-close" id="storyReportBtn" onclick="reportCurrentItem()" style="margin-right:6px;" title="Signaler cette annonce"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v14"/><path d="M5 4h9l-2 3 2 3H5"/></svg></button>
       <button class="story-close" onclick="closeStory()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
     </div>
     <div class="story-stage" id="storyStage">
@@ -580,6 +656,12 @@ const ICON = {
   award:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="10" cy="7.5" r="4.5"/><path d="M7.3 11.5L6 17.5l4-2 4 2-1.3-6"/></svg>`,
   map:        `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M7 4L3 5.5v11L7 15l6 2 4-1.5v-11L13 6z"/><path d="M7 4v11M13 6v11"/></svg>`,
   swap:       `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg>`,
+  star:       `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" stroke="none"><path d="M10 2.5l2.35 4.76 5.25.76-3.8 3.7.9 5.23L10 14.5l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76z"/></svg>`,
+  starOutline: `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M10 2.5l2.35 4.76 5.25.76-3.8 3.7.9 5.23L10 14.5l-4.7 2.45.9-5.23-3.8-3.7 5.25-.76z"/></svg>`,
+  heart:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17s-6.5-4-6.5-8.5A3.7 3.7 0 0110 5.8 3.7 3.7 0 0116.5 8.5C16.5 13 10 17 10 17z"/></svg>`,
+  heartFill:  `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" stroke="none"><path d="M10 17s-6.5-4-6.5-8.5A3.7 3.7 0 0110 5.8 3.7 3.7 0 0116.5 8.5C16.5 13 10 17 10 17z"/></svg>`,
+  flag:       `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v14"/><path d="M5 4h9l-2 3 2 3H5"/></svg>`,
+  trash2:     `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12"/><path d="M8 6V4.5h4V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/></svg>`,
 };
 // ================= CONFIG SUPABASE =================
 const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co";
@@ -966,6 +1048,7 @@ function enterApp(){
   document.getElementById('mainView').classList.remove('hidden');
   getGeo();
   loadFeed();
+  loadFavoriteIds();
   updateNotifBadge();
   subscribeToNotifications();
   if(!localStorage.getItem('toctoc_onboarded_v1')){
@@ -1099,6 +1182,29 @@ async function doLogout(){
   authMode = 'login'; renderAuth();
 }
 
+async function deleteMyAccount(){
+  if(!(await showAppConfirm("Supprimer définitivement ton compte ? Toutes tes annonces, réservations, messages et avis seront effacés. Cette action est irréversible."))) return;
+  const uid = currentUser.id;
+  const { data: myItemsForDelete } = await sb.from('items').select('id').eq('owner_id', uid);
+  const myItemIds = (myItemsForDelete||[]).map(i=>i.id);
+  if(myItemIds.length) await sb.from('reservations').delete().in('item_id', myItemIds);
+  await sb.from('reservations').delete().eq('receiver_id', uid);
+  await sb.from('messages').delete().eq('sender_id', uid);
+  await sb.from('ratings').delete().eq('rater_id', uid);
+  await sb.from('ratings').delete().eq('rated_id', uid);
+  await sb.from('favorites').delete().eq('user_id', uid);
+  await sb.from('alerts').delete().eq('user_id', uid);
+  await sb.from('notifications').delete().eq('user_id', uid);
+  if(myItemIds.length) await sb.from('items').delete().eq('owner_id', uid);
+  await sb.from('profiles').delete().eq('id', uid);
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('authView').classList.remove('hidden');
+  authMode = 'login'; renderAuth();
+  await showAppAlert("Tes données ont été supprimées. Pour effacer aussi ton identifiant de connexion (email), contacte-nous directement.");
+}
+
 // ================= NAVIGATION =================
 function switchView(v){
   currentView = v;
@@ -1143,6 +1249,88 @@ function setCategory(c){
 let feedItems = [];
 let feedIndex = 0;
 let ownerMap = {};
+let favoriteIds = new Set();
+
+async function loadFavoriteIds(){
+  const { data } = await sb.from('favorites').select('item_id').eq('user_id', currentUser.id);
+  favoriteIds = new Set((data||[]).map(f=>f.item_id));
+}
+async function toggleFavorite(itemId){
+  if(favoriteIds.has(itemId)){
+    await sb.from('favorites').delete().eq('user_id', currentUser.id).eq('item_id', itemId);
+    favoriteIds.delete(itemId);
+  } else {
+    await sb.from('favorites').insert({ user_id: currentUser.id, item_id: itemId });
+    favoriteIds.add(itemId);
+  }
+  document.querySelectorAll(`.fav-btn[data-item="${itemId}"]`).forEach(btn=>{
+    btn.innerHTML = favoriteIds.has(itemId) ? ICON.heartFill : ICON.heart;
+    btn.classList.toggle('active', favoriteIds.has(itemId));
+  });
+}
+
+async function openFavoritesOverlay(){
+  const el = document.getElementById('favoritesList');
+  el.innerHTML = `<div class="empty">Chargement…</div>`;
+  document.getElementById('favoritesOverlay').classList.remove('hidden');
+  const { data: favs } = await sb.from('favorites').select('item_id').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+  const itemIds = (favs||[]).map(f=>f.item_id);
+  if(!itemIds.length){ el.innerHTML = `<div class="empty">Aucun favori pour l'instant. Touche le cœur sur une annonce pour la garder de côté.</div>`; return; }
+  const { data: items } = await sb.from('items').select('*').in('id', itemIds);
+  const available = (items||[]).filter(it => it.status === 'disponible' && !isItemExpired(it));
+  if(!available.length){ el.innerHTML = `<div class="empty">Tes favoris ne sont plus disponibles (réservés, expirés ou retirés).</div>`; return; }
+  el.innerHTML = available.map(it => `
+    <div class="item-row" style="cursor:pointer;" onclick="document.getElementById('favoritesOverlay').classList.add('hidden'); setCategory('${it.category}'); setTimeout(()=>{ const idx=feedItems.findIndex(f=>f.id==='${it.id}'); if(idx>=0) openStory(idx); }, 400);">
+      <div class="thumb-wrap">${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="">` : `<div class="thumb-empty">${ICON.box}</div>`}</div>
+      <div class="info"><div class="item-name">${it.name}</div>${catBadge(it.category)}</div>
+      <button class="x-btn" style="width:26px; height:26px;" onclick="event.stopPropagation(); toggleFavorite('${it.id}'); this.closest('.item-row').remove();">${ICON.close}</button>
+    </div>
+  `).join('');
+}
+
+// ================= ALERTES =================
+async function openAlertsOverlay(){
+  document.getElementById('newAlertInput').value = '';
+  document.getElementById('alertsOverlay').classList.remove('hidden');
+  await renderAlertsList();
+}
+async function renderAlertsList(){
+  const el = document.getElementById('alertsList');
+  el.innerHTML = `<div class="empty">Chargement…</div>`;
+  const { data } = await sb.from('alerts').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false});
+  if(!data || data.length===0){ el.innerHTML = `<div class="empty">Aucune alerte pour l'instant.</div>`; return; }
+  el.innerHTML = data.map(a => `
+    <div class="item-row">
+      <div class="info"><div class="item-name">${a.keyword}</div></div>
+      <button class="x-btn" style="width:26px; height:26px;" onclick="deleteAlert('${a.id}')">${ICON.close}</button>
+    </div>
+  `).join('');
+}
+async function createAlert(){
+  const input = document.getElementById('newAlertInput');
+  const keyword = input.value.trim();
+  if(!keyword) return;
+  await sb.from('alerts').insert({ user_id: currentUser.id, keyword });
+  input.value = '';
+  renderAlertsList();
+}
+async function deleteAlert(id){
+  await sb.from('alerts').delete().eq('id', id);
+  renderAlertsList();
+}
+async function checkAlertsForNewItem(item){
+  const { data: matching } = await sb.from('alerts').select('user_id,keyword');
+  if(!matching) return;
+  const nameLower = (item.name||'').toLowerCase();
+  const toNotify = matching.filter(a => a.user_id !== currentUser.id && nameLower.includes(a.keyword.toLowerCase()));
+  for(const a of toNotify){
+    await sb.from('notifications').insert({
+      user_id: a.user_id,
+      type: 'alert',
+      message: `Un nouvel objet correspond à ton alerte "${a.keyword}" : "${item.name}" vient d'être publié !`
+    });
+  }
+}
 
 async function loadFeed(){
   const stack = document.getElementById('stack');
@@ -1170,9 +1358,26 @@ async function loadFeed(){
   const ownerIds = [...new Set(feedItems.map(i=>i.owner_id))];
   const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
   ownerMap = Object.fromEntries((owners||[]).map(o=>[o.id,o]));
+  await attachRatings(ownerIds);
 
   renderSubcatRow();
   applyFilters();
+}
+
+async function attachRatings(ownerIds){
+  const missing = ownerIds.filter(id => ownerMap[id] && !ownerMap[id].rating);
+  if(!missing.length) return;
+  const { data: allRatings } = await sb.from('ratings').select('rated_id,stars').in('rated_id', missing);
+  const byOwner = {};
+  (allRatings||[]).forEach(r => {
+    if(!byOwner[r.rated_id]) byOwner[r.rated_id] = { sum:0, count:0 };
+    byOwner[r.rated_id].sum += r.stars;
+    byOwner[r.rated_id].count++;
+  });
+  missing.forEach(id => {
+    const b = byOwner[id];
+    if(ownerMap[id]) ownerMap[id].rating = b ? { avg: b.sum/b.count, count: b.count } : { avg:0, count:0 };
+  });
 }
 
 // ================= RAYON DE RECHERCHE =================
@@ -1332,9 +1537,10 @@ function renderStack(){
     el.innerHTML = `
       <div class="swart">
         ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">${ICON.box}</div>`}
-        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
+        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'}${owner.rating?.count ? ' '+renderRatingStars(owner.rating.avg, owner.rating.count) : ''} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
         <div class="sw-free">GRATUIT</div>
         <div class="countdown-pill"><span class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="Encore "></span></div>
+        <button class="fav-btn ${favoriteIds.has(it.id)?'active':''}" data-item="${it.id}" onclick="event.stopPropagation(); toggleFavorite('${it.id}')">${favoriteIds.has(it.id) ? ICON.heartFill : ICON.heart}</button>
         <div class="sw-hint like">JE RÉSERVE</div>
         <div class="sw-hint pass">JE PASSE</div>
       </div>
@@ -1707,6 +1913,7 @@ async function submitPublish(){
     status: 'disponible'
   });
   if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; }
+  checkAlertsForNewItem({ name });
   closePublish();
   switchView('discover');
   loadFeed();
@@ -1770,7 +1977,10 @@ async function loadMine(){
     : { data: [] };
   const peopleMap = Object.fromEntries((people||[]).map(p=>[p.id,p.name]));
 
-  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap, peopleMap };
+  const { data: myRatings } = await sb.from('ratings').select('reservation_id').eq('rater_id', currentUser.id);
+  const ratedResIds = new Set((myRatings||[]).map(r=>r.reservation_id));
+
+  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap, peopleMap, ratedResIds };
   renderMine();
 }
 
@@ -1800,8 +2010,9 @@ function renderMine(){
 
       if(res && res.donor_validated){
         statusLabel = 'À RÉCUPÉRER'; statusClass = 'pending';
+        const receiverName = (mineDataCache.peopleMap[res.receiver_id] || 'la personne').replace(/'/g,"\\'");
         action = `<div class="val-card">${ICON.pin} Adresse envoyée, en attente que la personne vienne chercher l'objet.<br>
-          <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}','${it.category}')">✓ Confirmer que l'objet a été récupéré</button>
+          <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="confirmPickup('${it.id}','${it.category}','${res.id}','${res.receiver_id}','${receiverName}')">✓ Confirmer que l'objet a été récupéré</button>
         </div>`;
       } else if(res && !res.donor_validated){
         statusLabel = 'RÉSERVÉ'; statusClass = 'pending';
@@ -1857,7 +2068,8 @@ function renderMine(){
   } else {
     const filteredRes = myRes.filter(r => {
       const it = resItemMap[r.item_id];
-      return it && it.status !== 'attribue' && it.category===mineCat;
+      const done = it && it.status === 'attribue';
+      return it && it.category===mineCat && (!done || !mineDataCache.ratedResIds.has(r.id));
     });
     if(filteredRes.length===0){
       el.innerHTML = `<div class="empty">Rien dans cette catégorie.</div>`;
@@ -1877,7 +2089,9 @@ function renderMine(){
       let addrBlock = '';
       if(r.donor_validated){
         const mapsLink = r.pickup_lat ? ` · <a href="https://www.google.com/maps?q=${r.pickup_lat},${r.pickup_lng}" target="_blank" style="color:var(--teal-dark); font-weight:700;">${ICON.map} Maps</a>` : '';
-        addrBlock = `<div class="item-extra"><div class="addr-line">${ICON.pin} ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>` : ''}</div>`;
+        const ownerName0 = (mineDataCache.peopleMap[it.owner_id] || 'le donneur').replace(/'/g,"\\'");
+        const rateBlock = done ? `<button class="btn btn-teal" style="width:100%; margin-top:8px;" onclick="openRatingOverlay('${r.id}','${it.owner_id}','${ownerName0}')">${ICON.star} Noter ${ownerName0}</button>` : '';
+        addrBlock = `<div class="item-extra"><div class="addr-line">${ICON.pin} ${r.pickup_address || 'Adresse non renseignée'}${mapsLink}</div>${done ? `<div class="msg ok" style="margin-top:6px;">✓ Récupération confirmée par le donneur</div>${rateBlock}` : ''}</div>`;
       }
       const ownerName = mineDataCache.peopleMap[it.owner_id] || 'le donneur';
       const chatBlock = (offered && !done) ? `<div class="item-extra"><button class="btn btn-ghost" style="width:100%;" onclick="openTrocChat('${r.id}','${it.owner_id}','${ownerName.replace(/'/g,"\\'")}')">${ICON.swap} Discuter avec ${ownerName}</button></div>` : '';
@@ -1910,10 +2124,88 @@ async function republishItem(itemId){
   loadMine();
 }
 
-async function confirmPickup(itemId, category){
+async function confirmPickup(itemId, category, resId, receiverId, receiverName){
   await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
-  await showAppAlert(category==='nourriture' ? "🎉 Bien joué, tu as aidé quelqu'un !" : "🎉 Bien joué, tu t'en es débarrassé !");
   loadMine();
+  if(resId && receiverId) openRatingOverlay(resId, receiverId, receiverName);
+}
+
+// ================= NOTATION =================
+let ratingContext = null; // { reservationId, ratedId, stars }
+function openRatingOverlay(reservationId, ratedId, ratedName){
+  ratingContext = { reservationId, ratedId, stars:0 };
+  document.getElementById('ratingSubtitle').textContent = `Note ton échange avec ${ratedName}`;
+  document.getElementById('ratingComment').value = '';
+  document.getElementById('ratingMsg').innerHTML = '';
+  renderStarPicker();
+  document.getElementById('ratingOverlay').classList.remove('hidden');
+}
+function closeRatingOverlay(){
+  document.getElementById('ratingOverlay').classList.add('hidden');
+  ratingContext = null;
+}
+function renderStarPicker(){
+  const el = document.getElementById('starPicker');
+  el.innerHTML = [1,2,3,4,5].map(n => `<button class="${ratingContext.stars>=n?'active':''}" onclick="pickStar(${n})">${ICON.star}</button>`).join('');
+}
+function pickStar(n){ ratingContext.stars = n; renderStarPicker(); }
+async function submitRating(){
+  const msg = document.getElementById('ratingMsg');
+  if(!ratingContext || ratingContext.stars===0){ msg.innerHTML = `<div class="msg err">Choisis au moins une étoile.</div>`; return; }
+  const comment = document.getElementById('ratingComment').value.trim();
+  const { error } = await sb.from('ratings').insert({
+    reservation_id: ratingContext.reservationId,
+    rater_id: currentUser.id,
+    rated_id: ratingContext.ratedId,
+    stars: ratingContext.stars,
+    comment: comment || null
+  });
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  closeRatingOverlay();
+  loadMine();
+}
+function renderRatingStars(avg, count){
+  if(!count) return '';
+  const full = Math.round(avg);
+  return `<span class="rating-stars">${[1,2,3,4,5].map(n=>n<=full?ICON.star:ICON.starOutline).join('')}<span class="count">${avg.toFixed(1)} (${count})</span></span>`;
+}
+
+// ================= SIGNALEMENT =================
+let reportContext = null; // { type, id }
+function openReportOverlay(targetType, targetId, label){
+  reportContext = { targetType, targetId };
+  document.getElementById('reportTitle').textContent = `Signaler ${label}`;
+  document.getElementById('reportReason').value = '';
+  document.getElementById('reportMsg').innerHTML = '';
+  document.getElementById('reportOverlay').classList.remove('hidden');
+}
+function closeReportOverlay(){
+  document.getElementById('reportOverlay').classList.add('hidden');
+  reportContext = null;
+}
+function reportCurrentItem(){
+  const it = feedItems[storyIndex];
+  if(!it) return;
+  openReportOverlay('item', it.id, `"${it.name}"`);
+}
+function reportChatPartner(){
+  if(!chatOtherId) return;
+  openReportOverlay('user', chatOtherId, 'cette personne');
+}
+async function submitReport(){
+  const msg = document.getElementById('reportMsg');
+  const reason = document.getElementById('reportReason').value.trim();
+  if(!reason){ msg.innerHTML = `<div class="msg err">Décris rapidement le problème.</div>`; return; }
+  if(!reportContext){ return; }
+  const { error } = await sb.from('reports').insert({
+    reporter_id: currentUser.id,
+    target_type: reportContext.targetType,
+    target_id: reportContext.targetId,
+    reason
+  });
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  closeReportOverlay();
+  await showAppAlert("Merci, ton signalement a été transmis.");
 }
 
 async function validateReservation(resId, itemId, itemName){
@@ -2009,7 +2301,7 @@ async function sendTrocMessage(){
 }
 
 // ================= NOTIFICATIONS =================
-const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close, message:ICON.swap };
+const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close, message:ICON.swap, alert:ICON.bell };
 async function loadNotifs(){
   const el = document.getElementById('viewNotifs');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
@@ -2025,7 +2317,7 @@ async function loadNotifs(){
         <div class="notif-head">
           <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
           <div style="flex:1;">
-            <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : 'Notification'}</div>
+            <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : n.type==='alert' ? 'Alerte' : 'Notification'}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
           </div>
           <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
@@ -2053,10 +2345,14 @@ async function updateNotifBadge(){
 }
 
 // ================= PROFIL =================
-function renderProfile(){
+async function renderProfile(){
   const el = document.getElementById('viewProfile');
   const initials = (currentProfile?.name || 'TO').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const memberSince = currentUser?.created_at ? new Date(currentUser.created_at).toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : '';
+
+  const { count: givenCount } = await sb.from('items').select('id', {count:'exact', head:true}).eq('owner_id', currentUser.id).eq('status','attribue');
+  const { count: receivedCount } = await sb.from('reservations').select('id', {count:'exact', head:true}).eq('receiver_id', currentUser.id).eq('donor_validated', true);
+
   el.innerHTML = `
     <div class="profile-head">
       <div class="profile-avatar">${initials}</div>
@@ -2066,6 +2362,16 @@ function renderProfile(){
       </div>
     </div>
     <div class="trust-badge">🌱 Nouveau sur Toc Toc</div>
+
+    <div class="section-title">Ton impact</div>
+    <div class="impact-row">
+      <div class="impact-card"><div class="impact-num">${givenCount||0}</div><div class="impact-label">objet${givenCount>1?'s':''} donné${givenCount>1?'s':''}</div></div>
+      <div class="impact-card"><div class="impact-num">${receivedCount||0}</div><div class="impact-label">objet${receivedCount>1?'s':''} reçu${receivedCount>1?'s':''}</div></div>
+    </div>
+
+    <div class="section-title">Favoris et alertes</div>
+    <button class="btn btn-ghost" style="width:100%;" onclick="openFavoritesOverlay()">${ICON.heartFill} Mes favoris</button>
+    <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="openAlertsOverlay()">${ICON.bell} Mes alertes</button>
 
     <div class="section-title">Alertes</div>
     ${(typeof Notification!=='undefined' && Notification.permission==='granted')
@@ -2103,6 +2409,7 @@ function renderProfile(){
     <div id="verifyConfirm"></div>
 
     <button class="btn btn-ghost" style="width:100%; margin-top:20px;" onclick="doLogout()">Se déconnecter</button>
+    <button class="btn btn-ghost" style="width:100%; margin-top:8px; color:var(--coral); border-color:var(--coral);" onclick="deleteMyAccount()">${ICON.trash2} Supprimer mon compte</button>
   `;
 }
 async function saveProfile(){
@@ -2137,7 +2444,7 @@ async function saveProfile(){
   currentProfile = { ...currentProfile, ...patch };
   document.getElementById('userPill').textContent = "✓ " + (name.split(' ')[0] || 'Connecté');
   updateAddrPill();
-  renderProfile();
+  await renderProfile();
   document.getElementById('profMsg').innerHTML = emailPending
     ? `<div class="msg ok">✓ Enregistré. Un email de confirmation a été envoyé à ${email} — clique sur le lien pour valider ce changement d'adresse email.</div>`
     : `<div class="msg ok">✓ Enregistré</div>`;
@@ -2210,6 +2517,9 @@ async function init(){
   }
 }
 if(sb) init();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
