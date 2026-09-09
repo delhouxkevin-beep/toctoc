@@ -1841,10 +1841,13 @@ function renderStory(){
 
   const dotsEl = document.getElementById('storyPhotoDots');
   dotsEl.innerHTML = photos.length > 1 ? photos.map((_,i)=>`<div class="${i===storyPhotoIndex?'active':''}"></div>`).join('') : '';
-  document.getElementById('storyPhotoPrevBtn').classList.toggle('hidden', photos.length < 2);
-  document.getElementById('storyPhotoNextBtn').classList.toggle('hidden', photos.length < 2);
-  document.getElementById('storyItemPrevBtn').classList.toggle('hidden', feedItems.length < 2);
-  document.getElementById('storyItemNextBtn').classList.toggle('hidden', feedItems.length < 2);
+  // Une seule paire de flèches visible à la fois : plusieurs photos -> flèches "photo" ;
+  // une seule photo -> flèches "objet suivant/précédent" (sinon les deux se chevauchent).
+  const hasMultiplePhotos = photos.length > 1;
+  document.getElementById('storyPhotoPrevBtn').classList.toggle('hidden', !hasMultiplePhotos);
+  document.getElementById('storyPhotoNextBtn').classList.toggle('hidden', !hasMultiplePhotos);
+  document.getElementById('storyItemPrevBtn').classList.toggle('hidden', hasMultiplePhotos || feedItems.length < 2);
+  document.getElementById('storyItemNextBtn').classList.toggle('hidden', hasMultiplePhotos || feedItems.length < 2);
 
   // Cartes fantômes : aperçu des objets suivants, pour montrer qu'il y en a d'autres
   const next1 = feedItems.length > 1 ? feedItems[(storyIndex+1) % feedItems.length] : null;
