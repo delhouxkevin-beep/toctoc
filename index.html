@@ -123,6 +123,12 @@
   .img-lightbox.hidden{ display:none; }
   .img-lightbox img{ max-width:100%; max-height:100%; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
   .img-lightbox-close{ position:absolute; top:20px; right:18px; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.4); color:#fff; font-size:16px; cursor:pointer; }
+  .img-lightbox-nav{ position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.15); border:1.5px solid rgba(255,255,255,0.4); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .img-lightbox-nav.left{ left:12px; }
+  .img-lightbox-nav.right{ right:12px; }
+  .img-lightbox-dots{ position:absolute; bottom:24px; left:0; right:0; display:flex; justify-content:center; gap:6px; }
+  .img-lightbox-dots div{ width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.4); }
+  .img-lightbox-dots div.active{ background:#fff; }
   .card.done{ opacity:0.85; }
   .done-ribbon{ position:absolute; top:42%; left:-12%; width:124%; transform:rotate(-9deg); background:var(--teal); color:#fff; font-family:'Work Sans',sans-serif; font-weight:600; font-size:13px; padding:10px 0; box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:3; text-align:center; }
   .card img{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#F2ECFF; }
@@ -248,6 +254,12 @@
   .story-bars div{ flex:1; height:3px; border-radius:8px; background:rgba(255,255,255,0.3); }
   .story-bars div.active{ background:#fff; }
   .story-close{ width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.35); border:1.5px solid rgba(255,255,255,0.4); color:#fff; font-size:16px; cursor:pointer; flex-shrink:0; }
+  .story-photo-dots{ position:absolute; top:52px; left:0; right:0; z-index:2; display:flex; justify-content:center; gap:5px; }
+  .story-photo-dots div{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); }
+  .story-photo-dots div.active{ background:#fff; }
+  .story-tap-zone{ position:absolute; top:0; bottom:0; width:50%; z-index:3; cursor:pointer; }
+  .story-tap-zone.left{ left:0; }
+  .story-tap-zone.right{ right:0; }
   .story-stage{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:60px 14px 190px; z-index:1; }
   .story-card-stack{ position:relative; width:min(88vw, 400px); height:100%; max-height:100%; }
   .story-stage img{ max-width:100%; max-height:100%; border-radius:18px; box-shadow:0 30px 60px rgba(0,0,0,0.5); object-fit:cover; }
@@ -275,6 +287,11 @@
   .chip:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.12); }
   .chip.active{ background:var(--purple); color:#fff; }
   .preview-img{ width:100%; border-radius:14px; margin-bottom:10px; max-height:220px; object-fit:cover; }
+  .photo-picker-row{ display:flex; gap:8px; overflow-x:auto; margin-bottom:8px; padding-bottom:2px; }
+  .photo-picker-thumb{ position:relative; width:72px; height:72px; flex-shrink:0; border-radius:12px; overflow:hidden; }
+  .photo-picker-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .photo-picker-remove{ position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(20,14,36,0.7); color:#fff; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .photo-count-badge{ position:absolute; bottom:90px; left:12px; z-index:4; display:flex; align-items:center; gap:4px; background:rgba(20,14,36,0.65); color:#fff; font-family:'Work Sans',sans-serif; font-weight:600; font-size:11.5px; padding:5px 10px; border-radius:100px; }
 
   .navrow{ position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--line); display:flex; justify-content:space-around; padding:10px 0 18px; max-width:460px; margin:0 auto; z-index:100; box-shadow:0 -2px 12px rgba(0,0,0,0.06); }
   .navbtn{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; font-family:'Work Sans',sans-serif; font-size:10px; color:rgba(43,33,64,0.4); cursor:pointer; }
@@ -456,6 +473,9 @@
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImgLightbox()">
     <button class="img-lightbox-close" onclick="closeImgLightbox()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
     <img id="imgLightboxSrc" src="" alt="">
+    <button class="img-lightbox-nav left hidden" id="imgLightboxPrev" onclick="event.stopPropagation(); lightboxPrev();"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg></button>
+    <button class="img-lightbox-nav right hidden" id="imgLightboxNext" onclick="event.stopPropagation(); lightboxNext();"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l6 6-6 6"/></svg></button>
+    <div class="img-lightbox-dots" id="imgLightboxDots"></div>
   </div>
 
   <!-- Choix de l'objet à proposer en échange (troc) -->
@@ -634,11 +654,14 @@
       <button class="story-close" id="storyReportBtn" onclick="reportCurrentItem()" style="margin-right:6px;" title="Signaler cette annonce"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v14"/><path d="M5 4h9l-2 3 2 3H5"/></svg></button>
       <button class="story-close" onclick="closeStory()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
     </div>
+    <div class="story-photo-dots" id="storyPhotoDots"></div>
     <div class="story-stage" id="storyStage">
       <div class="story-card-stack">
         <img class="story-ghost story-ghost-2" id="storyGhost2" src="" alt="">
         <img class="story-ghost story-ghost-1" id="storyGhost1" src="" alt="">
         <img id="storyImg" src="" alt="">
+        <div class="story-tap-zone left" onclick="event.stopPropagation(); storyPhotoPrev();"></div>
+        <div class="story-tap-zone right" onclick="event.stopPropagation(); storyPhotoNext();"></div>
       </div>
     </div>
     <div class="story-info">
@@ -1596,6 +1619,7 @@ function renderStack(){
         ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openStory(${i})" style="cursor:zoom-in;">` : `<div class="noimg">${ICON.box}</div>`}
         <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'}${owner.rating?.count ? ' '+renderRatingStars(owner.rating.avg, owner.rating.count) : ''} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
         <div class="sw-free">GRATUIT</div>
+        ${it.photo_urls && it.photo_urls.length>1 ? `<div class="photo-count-badge">${ICON.camera} ${it.photo_urls.length}</div>` : ''}
         <div class="countdown-pill"><span class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="Encore "></span></div>
         <button class="fav-btn ${favoriteIds.has(it.id)?'active':''}" data-item="${it.id}" onclick="event.stopPropagation(); toggleFavorite('${it.id}')">${favoriteIds.has(it.id) ? ICON.heartFill : ICON.heart}</button>
         <div class="sw-hint like">JE RÉSERVE</div>
@@ -1749,6 +1773,7 @@ async function reserveTop(){
 let storyIndex = 0;
 function openStory(i){
   storyIndex = i;
+  storyPhotoIndex = 0;
   document.getElementById('storyOverlay').classList.remove('hidden');
   renderStory();
   setupStorySwipe();
@@ -1756,20 +1781,22 @@ function openStory(i){
 function closeStory(){
   document.getElementById('storyOverlay').classList.add('hidden');
 }
-function storyPrev(){ if(storyIndex>0){ storyIndex--; renderStory(); } else if(feedItems.length>1){ storyIndex = feedItems.length-1; renderStory(); } }
-function storyNext(){ if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } else if(feedItems.length>1){ storyIndex = 0; renderStory(); } }
+function storyPrev(){ storyPhotoIndex = 0; if(storyIndex>0){ storyIndex--; renderStory(); } else if(feedItems.length>1){ storyIndex = feedItems.length-1; renderStory(); } }
+function storyNext(){ storyPhotoIndex = 0; if(storyIndex<feedItems.length-1){ storyIndex++; renderStory(); } else if(feedItems.length>1){ storyIndex = 0; renderStory(); } }
 
 let storySwipeBound = false;
+let storyLastDx = 0;
 function setupStorySwipe(){
   if(storySwipeBound) return;
   storySwipeBound = true;
   const stage = document.getElementById('storyStage');
   const img = document.getElementById('storyImg');
   let startX=0, dx=0, dragging=false;
-  function onDown(x){ dragging=true; startX=x; img.style.transition='none'; }
+  function onDown(x){ dragging=true; startX=x; dx=0; storyLastDx=0; img.style.transition='none'; }
   function onMove(x){
     if(!dragging) return;
     dx = x-startX;
+    storyLastDx = dx;
     img.style.transform = `translateX(${dx}px) rotate(${dx/28}deg)`;
   }
   function onUp(){
@@ -1793,11 +1820,16 @@ function renderStory(){
   if(!it) return;
   const owner = ownerMap[it.owner_id] || {};
   const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
-  document.getElementById('storyImg').src = it.photo_url || '';
+  const photos = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  if(storyPhotoIndex >= photos.length) storyPhotoIndex = 0;
+  document.getElementById('storyImg').src = photos[storyPhotoIndex] || '';
   document.getElementById('storyImg').style.transform = '';
   document.getElementById('storyName').textContent = it.name;
   document.getElementById('storyMeta').textContent = `📍 ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}${it.pickup_time ? ' · dispo '+it.pickup_time : ''}`;
   document.getElementById('storyCountdown').innerHTML = `⏳ <span class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}"></span> avant que l'annonce ne soit retirée`;
+
+  const dotsEl = document.getElementById('storyPhotoDots');
+  dotsEl.innerHTML = photos.length > 1 ? photos.map((_,i)=>`<div class="${i===storyPhotoIndex?'active':''}"></div>`).join('') : '';
 
   // Cartes fantômes : aperçu des objets suivants, pour montrer qu'il y en a d'autres
   const next1 = feedItems.length > 1 ? feedItems[(storyIndex+1) % feedItems.length] : null;
@@ -1816,6 +1848,25 @@ function renderStory(){
     : `${ICON.gift} Je réserve cet objet`;
   btn.classList.remove('done');
   btn.disabled = false;
+}
+let storyPhotoIndex = 0;
+function storyPhotoPrev(){
+  if(Math.abs(storyLastDx) > 10) return;
+  const it = feedItems[storyIndex];
+  if(!it) return;
+  const photos = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  if(photos.length < 2) return;
+  storyPhotoIndex = (storyPhotoIndex - 1 + photos.length) % photos.length;
+  renderStory();
+}
+function storyPhotoNext(){
+  if(Math.abs(storyLastDx) > 10) return;
+  const it = feedItems[storyIndex];
+  if(!it) return;
+  const photos = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  if(photos.length < 2) return;
+  storyPhotoIndex = (storyPhotoIndex + 1) % photos.length;
+  renderStory();
 }
 
 async function storyReserve(){
@@ -1882,8 +1933,7 @@ async function reserveItem(itemId, durationMinutes, offeredItemId){
 
 // ================= PUBLIER =================
 const SUBCATEGORIES = ['Meubles','Électroménager','Électronique & Informatique','Vêtements & Accessoires','Enfants & Bébé','Livres & Médias','Sport & Loisirs','Jardin & Bricolage','Décoration','Autres'];
-let pubPhotoFile = null;
-let pubPhotoPreviewUrl = null;
+let pubPhotos = []; // { url } pour une photo déjà en ligne, ou { file, previewUrl } pour une nouvelle
 let pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
 let editingItemId = null;
 let editingItemCategory = null;
@@ -1895,7 +1945,7 @@ async function openPublish(){
     return;
   }
   editingItemId = null; editingItemCategory = null;
-  pubPhotoFile = null; pubPhotoPreviewUrl = null;
+  pubPhotos = [];
   pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
   document.getElementById('publishTitle').textContent = 'Nouvel objet';
   document.getElementById('publishOverlay').classList.remove('hidden');
@@ -1907,8 +1957,8 @@ async function openEditItem(itemId){
   if(!it) return;
   editingItemId = itemId;
   editingItemCategory = it.category;
-  pubPhotoFile = null;
-  pubPhotoPreviewUrl = it.photo_url || null;
+  const urls = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  pubPhotos = urls.map(url => ({ url }));
   pub = { desc: it.description||'', etat: it.etat||'Bon état', duration: it.duration_hours||12, pickup: it.pickup_time||'', subcategory: it.subcategory||'' };
   document.getElementById('publishTitle').textContent = 'Modifier l\'annonce';
   document.getElementById('publishOverlay').classList.remove('hidden');
@@ -1924,8 +1974,14 @@ function renderPublish(){
   const body = document.getElementById('publishBody');
   const cat = editingItemId ? editingItemCategory : category;
   body.innerHTML = `
-    ${pubPhotoPreviewUrl ? `<img src="${pubPhotoPreviewUrl}" class="preview-img">` : ''}
-    <input type="file" accept="image/*" capture="environment" id="pubFileInput" onchange="onPickPhoto(event)">
+    ${pubPhotos.length ? `<div class="photo-picker-row">${pubPhotos.map((p,i)=>`
+      <div class="photo-picker-thumb">
+        <img src="${p.url || p.previewUrl}" alt="">
+        <button class="photo-picker-remove" onclick="removePubPhoto(${i})">${ICON.close}</button>
+      </div>
+    `).join('')}</div>` : ''}
+    <input type="file" accept="image/*" capture="environment" multiple id="pubFileInput" onchange="onPickPhoto(event)">
+    <label style="font-size:11px; color:rgba(43,33,64,0.5); margin-top:-6px;">Touche plusieurs fois pour ajouter d'autres photos (${pubPhotos.length} pour l'instant)</label>
     <label>Description</label>
     <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea>
     ${cat==='objets' ? `
@@ -1950,10 +2006,13 @@ function renderPublish(){
   `;
 }
 function onPickPhoto(e){
-  const f = e.target.files[0];
-  if(!f) return;
-  pubPhotoFile = f;
-  pubPhotoPreviewUrl = URL.createObjectURL(f);
+  const files = Array.from(e.target.files || []);
+  files.forEach(f => pubPhotos.push({ file:f, previewUrl:URL.createObjectURL(f) }));
+  e.target.value = '';
+  renderPublish();
+}
+function removePubPhoto(idx){
+  pubPhotos.splice(idx,1);
   renderPublish();
 }
 function setEtat(e){ pub.etat=e; renderPublish(); }
@@ -1972,21 +2031,24 @@ async function submitPublish(){
     return;
   }
   msg.innerHTML = `<div class="msg ok">${editingItemId ? 'Enregistrement…' : 'Publication en cours…'}</div>`;
-  let photoUrl = editingItemId ? pubPhotoPreviewUrl : null;
-  if(pubPhotoFile){
-    const path = `${currentUser.id}/${Date.now()}-${pubPhotoFile.name}`;
-    const { error: upErr } = await sb.storage.from('photos').upload(path, pubPhotoFile);
+  const uploadedUrls = [];
+  for(const p of pubPhotos){
+    if(p.url){ uploadedUrls.push(p.url); continue; }
+    const path = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}-${p.file.name}`;
+    const { error: upErr } = await sb.storage.from('photos').upload(path, p.file);
     if(upErr){ msg.innerHTML = `<div class="msg err">Erreur photo : ${upErr.message}</div>`; return; }
-    const { data: pub2 } = sb.storage.from('photos').getPublicUrl(path);
-    photoUrl = pub2.publicUrl;
+    const { data: pubUrlData } = sb.storage.from('photos').getPublicUrl(path);
+    uploadedUrls.push(pubUrlData.publicUrl);
   }
+  const photoUrl = uploadedUrls[0] || null;
+  const photoUrls = uploadedUrls.length ? uploadedUrls : null;
   const name = (pub.desc.split(' ').slice(0,4).join(' ')) || "Nouvel objet";
 
   if(editingItemId){
     const { error } = await sb.from('items').update({
       name, description: pub.desc, etat: pub.etat,
       subcategory: cat==='objets' ? pub.subcategory : null,
-      photo_url: photoUrl,
+      photo_url: photoUrl, photo_urls: photoUrls,
       pickup_time: pub.pickup, duration_hours: pub.duration
     }).eq('id', editingItemId);
     if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; }
@@ -1999,7 +2061,7 @@ async function submitPublish(){
     owner_id: currentUser.id,
     name, description: pub.desc, etat: pub.etat, category,
     subcategory: category==='objets' ? pub.subcategory : null,
-    photo_url: photoUrl,
+    photo_url: photoUrl, photo_urls: photoUrls,
     city: currentProfile.city,
     postal_code: currentProfile.postal_code,
     lat: currentProfile.lat, lng: currentProfile.lng,
@@ -2078,11 +2140,31 @@ async function loadMine(){
   renderMine();
 }
 
-function openImgLightbox(url){
-  if(!url) return;
-  document.getElementById('imgLightboxSrc').src = url;
+let lightboxPhotos = [];
+let lightboxIndex = 0;
+function openImgLightboxForItem(itemId){
+  const it = (mineDataCache?.myItems||[]).find(i=>i.id===itemId) || mineDataCache?.resItemMap?.[itemId];
+  if(!it) return;
+  const photos = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  openImgLightbox(photos);
+}
+function openImgLightbox(urls){
+  if(!urls) return;
+  lightboxPhotos = Array.isArray(urls) ? urls : [urls];
+  if(!lightboxPhotos.length) return;
+  lightboxIndex = 0;
+  renderLightbox();
   document.getElementById('imgLightbox').classList.remove('hidden');
 }
+function renderLightbox(){
+  document.getElementById('imgLightboxSrc').src = lightboxPhotos[lightboxIndex] || '';
+  const dots = document.getElementById('imgLightboxDots');
+  dots.innerHTML = lightboxPhotos.length > 1 ? lightboxPhotos.map((_,i)=>`<div class="${i===lightboxIndex?'active':''}"></div>`).join('') : '';
+  document.getElementById('imgLightboxPrev').classList.toggle('hidden', lightboxPhotos.length < 2);
+  document.getElementById('imgLightboxNext').classList.toggle('hidden', lightboxPhotos.length < 2);
+}
+function lightboxPrev(){ lightboxIndex = (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length; renderLightbox(); }
+function lightboxNext(){ lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length; renderLightbox(); }
 function closeImgLightbox(){ document.getElementById('imgLightbox').classList.add('hidden'); }
 
 function renderMine(){
@@ -2144,7 +2226,7 @@ function renderMine(){
       const countdown = showCountdown ? `<div class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="En ligne encore "></div>` : '';
 
       const thumb = `<div class="thumb-wrap">
-        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightboxForItem('${it.id}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
       </div>`;
 
       return `
@@ -2180,7 +2262,7 @@ function renderMine(){
       const statusLabel = done ? 'RÉCUPÉRÉ' : (r.donor_validated ? 'À RÉCUPÉRER' : 'EN ATTENTE');
       const statusClass = done ? 'offline' : (r.donor_validated ? 'pending' : 'pending');
       const thumb = `<div class="thumb-wrap">
-        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightbox('${it.photo_url}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="" onclick="openImgLightboxForItem('${it.id}')">` : `<div class="thumb-empty"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5L10 3l7 3.5-7 3.5-7-3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg></div>`}
         ${done ? `<div class="mini-ribbon"></div>` : ''}
       </div>`;
       let addrBlock = '';
