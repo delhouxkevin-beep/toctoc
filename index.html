@@ -421,7 +421,7 @@
   <div class="overlay hidden" id="publishOverlay">
     <div class="sheet">
       <div class="sheet-head">
-        <div class="sheet-title">Nouvel objet</div>
+        <div class="sheet-title" id="publishTitle">Nouvel objet</div>
         <button class="x-btn" onclick="closePublish()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <div id="publishBody"></div>
@@ -1885,6 +1885,8 @@ const SUBCATEGORIES = ['Meubles','Électroménager','Électronique & Informatiqu
 let pubPhotoFile = null;
 let pubPhotoPreviewUrl = null;
 let pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
+let editingItemId = null;
+let editingItemCategory = null;
 
 async function openPublish(){
   if(!currentProfile?.address_verified){
@@ -1892,21 +1894,41 @@ async function openPublish(){
     openLocationSheet();
     return;
   }
+  editingItemId = null; editingItemCategory = null;
   pubPhotoFile = null; pubPhotoPreviewUrl = null;
   pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
+  document.getElementById('publishTitle').textContent = 'Nouvel objet';
   document.getElementById('publishOverlay').classList.remove('hidden');
   renderPublish();
 }
-function closePublish(){ document.getElementById('publishOverlay').classList.add('hidden'); }
+
+async function openEditItem(itemId){
+  const { data: it } = await sb.from('items').select('*').eq('id', itemId).single();
+  if(!it) return;
+  editingItemId = itemId;
+  editingItemCategory = it.category;
+  pubPhotoFile = null;
+  pubPhotoPreviewUrl = it.photo_url || null;
+  pub = { desc: it.description||'', etat: it.etat||'Bon état', duration: it.duration_hours||12, pickup: it.pickup_time||'', subcategory: it.subcategory||'' };
+  document.getElementById('publishTitle').textContent = 'Modifier l\'annonce';
+  document.getElementById('publishOverlay').classList.remove('hidden');
+  renderPublish();
+}
+
+function closePublish(){
+  document.getElementById('publishOverlay').classList.add('hidden');
+  editingItemId = null; editingItemCategory = null;
+}
 
 function renderPublish(){
   const body = document.getElementById('publishBody');
+  const cat = editingItemId ? editingItemCategory : category;
   body.innerHTML = `
     ${pubPhotoPreviewUrl ? `<img src="${pubPhotoPreviewUrl}" class="preview-img">` : ''}
     <input type="file" accept="image/*" capture="environment" id="pubFileInput" onchange="onPickPhoto(event)">
     <label>Description</label>
     <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea>
-    ${category==='objets' ? `
+    ${cat==='objets' ? `
     <label>Catégorie <span class="field-optional">(obligatoire)</span></label>
     <select id="pSubcat" onchange="pub.subcategory=this.value">
       <option value="" ${pub.subcategory===''?'selected':''} disabled>Choisis une catégorie…</option>
@@ -1923,7 +1945,7 @@ function renderPublish(){
     </div>
     <label>Horaire disponible pour venir chercher</label>
     <input type="time" id="pPickup" value="${pub.pickup}" oninput="pub.pickup=this.value">
-    <button class="btn-main" onclick="submitPublish()">🚀 Mettre en ligne</button>
+    <button class="btn-main" onclick="submitPublish()">${editingItemId ? '✓ Enregistrer les modifications' : '🚀 Mettre en ligne'}</button>
     <div id="pubMsg"></div>
   `;
 }
@@ -1940,16 +1962,17 @@ function setDur(h){ pub.duration=h; renderPublish(); }
 async function submitPublish(){
   if(!currentUser) return;
   const msg = document.getElementById('pubMsg');
+  const cat = editingItemId ? editingItemCategory : category;
   if(!currentProfile?.address_verified){
     msg.innerHTML = `<div class="msg err">${ICON.warning} Confirme d'abord ton adresse exacte avec ta position GPS (${ICON.pin} en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
     return;
   }
-  if(category==='objets' && !pub.subcategory){
+  if(cat==='objets' && !pub.subcategory){
     msg.innerHTML = `<div class="msg err">Choisis une catégorie avant de publier.</div>`;
     return;
   }
-  msg.innerHTML = `<div class="msg ok">Publication en cours…</div>`;
-  let photoUrl = null;
+  msg.innerHTML = `<div class="msg ok">${editingItemId ? 'Enregistrement…' : 'Publication en cours…'}</div>`;
+  let photoUrl = editingItemId ? pubPhotoPreviewUrl : null;
   if(pubPhotoFile){
     const path = `${currentUser.id}/${Date.now()}-${pubPhotoFile.name}`;
     const { error: upErr } = await sb.storage.from('photos').upload(path, pubPhotoFile);
@@ -1958,6 +1981,20 @@ async function submitPublish(){
     photoUrl = pub2.publicUrl;
   }
   const name = (pub.desc.split(' ').slice(0,4).join(' ')) || "Nouvel objet";
+
+  if(editingItemId){
+    const { error } = await sb.from('items').update({
+      name, description: pub.desc, etat: pub.etat,
+      subcategory: cat==='objets' ? pub.subcategory : null,
+      photo_url: photoUrl,
+      pickup_time: pub.pickup, duration_hours: pub.duration
+    }).eq('id', editingItemId);
+    if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; }
+    closePublish();
+    loadMine();
+    return;
+  }
+
   const { error } = await sb.from('items').insert({
     owner_id: currentUser.id,
     name, description: pub.desc, etat: pub.etat, category,
@@ -2097,7 +2134,10 @@ function renderMine(){
         statusLabel = 'RETIRÉ'; statusClass = 'offline';
       } else {
         statusLabel = 'EN LIGNE'; statusClass = 'online';
-        action = `<button class="withdraw-btn" onclick="withdrawItem('${it.id}')">Retirer l'annonce</button>`;
+        action = `<div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" style="flex:1;" onclick="openEditItem('${it.id}')">${ICON.camera} Modifier</button>
+          <button class="withdraw-btn" style="flex-shrink:0;" onclick="withdrawItem('${it.id}')">Retirer</button>
+        </div>`;
       }
 
       const showCountdown = it.status === 'disponible' && !isItemExpired(it);
@@ -2152,6 +2192,7 @@ function renderMine(){
       }
       const ownerName = mineDataCache.peopleMap[it.owner_id] || 'le donneur';
       const chatBlock = (offered && !done) ? `<div class="item-extra"><button class="btn btn-ghost" style="width:100%;" onclick="openTrocChat('${r.id}','${it.owner_id}','${ownerName.replace(/'/g,"\\'")}')">${ICON.swap} Discuter avec ${ownerName}</button></div>` : '';
+      const cancelBlock = !done ? `<div class="item-extra"><button class="withdraw-btn" style="width:100%;" onclick="cancelMyReservation('${r.id}','${it.id}','${it.name.replace(/'/g,"\\'")}')">Annuler ma réservation</button></div>` : '';
       const pickupCountdown = (!done && r.expires_at) ? `<div class="countdown-badge" data-expires="${r.expires_at}" data-prefix="Temps restant : "></div>` : '';
       return `
         <div class="item-row">
@@ -2165,6 +2206,7 @@ function renderMine(){
         </div>
         ${addrBlock}
         ${chatBlock}
+        ${cancelBlock}
       `;
     }).join('');
   }
@@ -2297,6 +2339,22 @@ async function declineReservation(resId, itemId, itemName){
     type: 'declined',
     message: `Ta réservation pour "${itemName}" a été refusée par le donneur. L'objet est de nouveau disponible pour les autres.`
   });
+  loadMine();
+}
+
+async function cancelMyReservation(resId, itemId, itemName){
+  if(!(await showAppConfirm(`Annuler ta réservation pour "${itemName}" ? L'objet redeviendra disponible pour les autres, et tu ne pourras pas le reprendre automatiquement.`))) return;
+  const { data: item } = await sb.from('items').select('owner_id').eq('id', itemId).single();
+  await sb.from('reservations').delete().eq('id', resId);
+  await sb.from('items').update({ status:'disponible' }).eq('id', itemId);
+  if(item){
+    await sb.from('notifications').insert({
+      user_id: item.owner_id,
+      type: 'declined',
+      ref_id: itemId,
+      message: `La réservation de "${itemName}" a été annulée par la personne qui l'avait réservé. L'objet est de nouveau disponible.`
+    });
+  }
   loadMine();
 }
 
