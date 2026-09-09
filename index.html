@@ -399,7 +399,10 @@
       </div>
       <label>Ou un autre délai (minutes)</label>
       <input type="number" id="delayCustomInput" placeholder="ex: 45" min="1">
-      <button class="btn-main" onclick="submitCustomDelay()">Valider</button>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="withdraw-btn" style="flex:1;" onclick="closeDelaySheet(null)">Annuler</button>
+        <button class="btn-main" style="flex:2; margin-top:0;" onclick="submitCustomDelay()">Valider</button>
+      </div>
       <div id="delayCustomMsg"></div>
     </div>
   </div>
@@ -1946,6 +1949,9 @@ function renderProfile(){
     <div class="section-title">Mes données personnelles</div>
     <label>Nom</label>
     <input id="prName" value="${currentProfile?.name||''}">
+    <label>Email</label>
+    <input id="prEmail" type="email" value="${currentUser?.email||''}">
+    <p style="font-size:11px; color:rgba(43,33,64,0.5); margin-top:-4px;">Si tu changes ton email, un lien de confirmation te sera envoyé — le changement ne sera actif qu'après avoir cliqué dessus.</p>
     <label>Téléphone</label>
     <input id="prPhone" value="${currentProfile?.phone||''}">
     <label>Rue et numéro</label>
@@ -1974,6 +1980,7 @@ function renderProfile(){
 }
 async function saveProfile(){
   const name = document.getElementById('prName').value.trim();
+  const email = document.getElementById('prEmail').value.trim();
   const phone = document.getElementById('prPhone').value.trim();
   const street = document.getElementById('prStreet').value.trim();
   const postal_code = document.getElementById('prPostal').value.trim();
@@ -1983,6 +1990,15 @@ async function saveProfile(){
   if(street || postal_code || city || country){
     if(!street || !postal_code || !city || !country){ msg0.innerHTML = `<div class="msg err">Remplis les 4 champs d'adresse (rue, code postal, ville, pays), ou laisse-les tous vides.</div>`; return; }
   }
+  if(!email || !email.includes('@')){ msg0.innerHTML = `<div class="msg err">Entre une adresse email valide.</div>`; return; }
+
+  let emailPending = false;
+  if(email !== currentUser.email){
+    const { error: emailErr } = await sb.auth.updateUser({ email });
+    if(emailErr){ msg0.innerHTML = `<div class="msg err">Email non modifié : ${emailErr.message}</div>`; return; }
+    emailPending = true;
+  }
+
   const address = composeAddress(street, postal_code, city, country);
   // si l'adresse change, on redemande une vérification GPS
   const addressChanged = address !== (currentProfile?.address||'');
@@ -1993,9 +2009,11 @@ async function saveProfile(){
   if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
   currentProfile = { ...currentProfile, ...patch };
   document.getElementById('userPill').textContent = "✓ " + (name.split(' ')[0] || 'Connecté');
-  msg.innerHTML = `<div class="msg ok">✓ Enregistré</div>`;
   updateAddrPill();
   renderProfile();
+  document.getElementById('profMsg').innerHTML = emailPending
+    ? `<div class="msg ok">✓ Enregistré. Un email de confirmation a été envoyé à ${email} — clique sur le lien pour valider ce changement d'adresse email.</div>`
+    : `<div class="msg ok">✓ Enregistré</div>`;
 }
 
 let pendingGPS = null;
