@@ -170,6 +170,12 @@
 
   .auth-wrap{ padding:40px 24px; display:flex; flex-direction:column; gap:10px; }
   .auth-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:var(--ink); text-align:center; margin-bottom:8px; }
+  .terms-box{ max-height:150px; overflow-y:auto; border:1px solid var(--color-border-default); border-radius:12px; padding:10px 12px; margin-top:14px; background:var(--color-surface-subtle); font-size:11px; line-height:1.5; color:var(--color-text-secondary); }
+  .terms-box p{ margin:0 0 10px; }
+  .terms-box p:last-child{ margin-bottom:0; }
+  .terms-box strong{ color:var(--ink-soft); }
+  .terms-check{ display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--ink-soft); margin-top:10px; cursor:pointer; }
+  .terms-check input{ margin-top:2px; flex-shrink:0; width:16px; height:16px; }
   input, textarea, select{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--color-border-default); font-family:'Work Sans',sans-serif; font-size:14px; outline:none; }
   textarea{ resize:none; min-height:70px; }
   label{ font-family:'Work Sans',sans-serif; font-weight:600; font-size:12px; color:var(--ink); margin-top:6px; }
@@ -292,6 +298,22 @@
   <div id="authView" class="auth-wrap hidden"></div>
 
   <!-- Main app -->
+  <!-- Validation rétroactive des conditions (comptes créés avant leur ajout) -->
+  <div class="overlay hidden" id="termsGateOverlay" style="z-index:900;">
+    <div class="sheet">
+      <div class="auth-title" style="font-size:18px;">Mise à jour de nos conditions</div>
+      <p style="font-size:12.5px; color:rgba(43,33,64,0.65); text-align:center; margin-top:0;">Ton compte a été créé avant l'ajout de ces conditions d'utilisation. Merci de les lire et de les accepter pour continuer à utiliser Toc Toc.</p>
+      <div class="terms-box" id="gateTermsBox"></div>
+      <label class="terms-check">
+        <input type="checkbox" id="gateTerms">
+        J'ai lu et j'accepte les conditions d'utilisation ci-dessus, et je certifie être majeur(e).
+      </label>
+      <button class="btn-main" onclick="acceptTermsGate()">Continuer</button>
+      <div id="gateTermsMsg"></div>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="doLogout()">Refuser et me déconnecter</button>
+    </div>
+  </div>
+
   <div id="mainView" class="hidden">
     <div class="topbar">
       <div class="brand">
@@ -785,6 +807,32 @@ async function confirmLocGPS(){
 function cancelLocGPS(){ pendingLocGPS = null; document.getElementById('locVerifyConfirm').innerHTML = ''; }
 
 // ================= AUTH =================
+const TERMS_HTML = `
+  <p><strong>1. Objet de l'application</strong><br>
+  Toc Toc est une plateforme de mise en relation entre particuliers permettant de donner, recevoir ou échanger (troc) des objets ou de la nourriture. L'éditeur de l'application agit uniquement comme intermédiaire technique et n'est partie à aucune transaction, don ou échange conclu entre utilisateurs.</p>
+
+  <p><strong>2. Responsabilité des utilisateurs</strong><br>
+  Chaque utilisateur est seul responsable des informations qu'il publie (description, état, photos des objets), de leur exactitude, et de la légalité des objets proposés. Il est strictement interdit de publier des objets dangereux, illégaux, contrefaits, périmés (pour la nourriture) ou de toute autre nature répréhensible. L'éditeur se réserve le droit de retirer toute annonce et de suspendre ou supprimer tout compte ne respectant pas ces règles, sans préavis.</p>
+
+  <p><strong>3. Rencontres entre utilisateurs</strong><br>
+  Les échanges d'adresses et les rencontres physiques pour la remise des objets se font sous l'entière responsabilité des utilisateurs concernés. L'éditeur recommande de privilégier des lieux publics ou passants et ne peut être tenu responsable d'un quelconque incident, litige, dommage ou préjudice survenant à l'occasion d'une rencontre ou d'un échange organisé via l'application.</p>
+
+  <p><strong>4. Données personnelles</strong><br>
+  L'application collecte : nom, téléphone, adresse postale, position GPS (si activée), email, photos publiées et messages échangés dans le cadre d'un troc. Ces données sont utilisées uniquement pour le fonctionnement du service (affichage des annonces, mise en relation, remise des objets) et ne sont ni vendues ni transmises à des tiers. Chaque utilisateur peut demander la consultation, la modification ou la suppression de ses données en contactant l'éditeur. Conformément au RGPD, ces droits peuvent aussi être exercés auprès de l'autorité de protection des données compétente.</p>
+
+  <p><strong>5. Disponibilité du service</strong><br>
+  Toc Toc est une application en version de test, fournie "en l'état", sans garantie de disponibilité, de continuité ou d'absence d'erreurs. L'éditeur ne garantit pas un accès permanent au service et peut le modifier, suspendre ou interrompre à tout moment, notamment pendant cette phase de test.</p>
+
+  <p><strong>6. Limitation de responsabilité</strong><br>
+  Dans toute la mesure permise par la loi, l'éditeur ne pourra être tenu responsable des dommages directs ou indirects résultant de l'utilisation de l'application, de l'état des objets échangés, du comportement d'un utilisateur, ou d'une rencontre organisée via la plateforme.</p>
+
+  <p><strong>7. Âge minimum</strong><br>
+  L'application est réservée aux personnes majeures. En créant un compte, l'utilisateur certifie avoir au moins 18 ans.</p>
+
+  <p><strong>8. Modification des présentes conditions</strong><br>
+  L'éditeur peut modifier ces conditions à tout moment ; les utilisateurs seront informés de tout changement substantiel.</p>
+`;
+
 function renderAuth(){
   const el = document.getElementById('authView');
   if(authMode === 'signup'){
@@ -800,6 +848,13 @@ function renderAuth(){
       <input id="suEmail" type="email" placeholder="ex: toi@email.com">
       <label>Mot de passe</label>
       <input id="suPassword" type="password" placeholder="8 caractères minimum">
+
+      <div class="terms-box" id="termsBox">${TERMS_HTML}</div>
+      <label class="terms-check">
+        <input type="checkbox" id="suTerms">
+        J'ai lu et j'accepte les conditions d'utilisation ci-dessus, et je certifie être majeur(e).
+      </label>
+
       <button class="btn-main" onclick="doSignup()">Créer mon compte</button>
       <div id="authMsg"></div>
       <div class="switch-link" onclick="authMode='login'; renderAuth();">J'ai déjà un compte → me connecter</div>
@@ -830,13 +885,18 @@ async function doSignup(){
   const address = document.getElementById('suAddress').value.trim();
   const email = document.getElementById('suEmail').value.trim();
   const password = document.getElementById('suPassword').value;
+  const termsAccepted = document.getElementById('suTerms').checked;
   if(!name || !phone || !address || !email || !password){
     showAuthMsg("Merci de remplir tous les champs.", false); return;
   }
+  if(!termsAccepted){
+    showAuthMsg("Merci de cocher la case d'acceptation des conditions d'utilisation pour continuer.", false); return;
+  }
   showAuthMsg("Création en cours…", true);
+  const terms_accepted_at = new Date().toISOString();
   const { data, error } = await sb.auth.signUp({
     email, password,
-    options: { data: { name, phone, address } }
+    options: { data: { name, phone, address, terms_accepted: true, terms_accepted_at } }
   });
   if(error){ showAuthMsg("Erreur : " + error.message, false); return; }
   showAuthMsg("✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis reviens te connecter.", true);
@@ -857,8 +917,47 @@ async function onLoggedIn(user){
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   currentProfile = profile;
   document.getElementById('authView').classList.add('hidden');
-  document.getElementById('mainView').classList.remove('hidden');
   document.getElementById('userPill').textContent = "✓ " + (profile?.name?.split(' ')[0] || 'Connecté');
+
+  if(profile && !profile.terms_accepted_at){
+    if(user.user_metadata?.terms_accepted_at){
+      // recopie fidèle d'un consentement déjà donné au moment de l'inscription
+      // (filet de sécurité si le trigger d'inscription n'avait pas repris ce champ)
+      await sb.from('profiles').update({ terms_accepted_at: user.user_metadata.terms_accepted_at }).eq('id', user.id);
+      currentProfile = { ...currentProfile, terms_accepted_at: user.user_metadata.terms_accepted_at };
+    } else {
+      // compte créé avant l'ajout des conditions : on ne peut pas lui inventer un accord,
+      // on les lui présente maintenant et on bloque l'accès tant qu'il n'a pas répondu.
+      openTermsGate();
+      return;
+    }
+  }
+
+  enterApp();
+}
+
+function openTermsGate(){
+  document.getElementById('gateTermsBox').innerHTML = TERMS_HTML;
+  document.getElementById('gateTerms').checked = false;
+  document.getElementById('gateTermsMsg').innerHTML = '';
+  document.getElementById('termsGateOverlay').classList.remove('hidden');
+}
+async function acceptTermsGate(){
+  const msg = document.getElementById('gateTermsMsg');
+  if(!document.getElementById('gateTerms').checked){
+    msg.innerHTML = `<div class="msg err">Merci de cocher la case pour continuer.</div>`;
+    return;
+  }
+  const terms_accepted_at = new Date().toISOString();
+  const { error } = await sb.from('profiles').update({ terms_accepted_at }).eq('id', currentUser.id);
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  currentProfile = { ...currentProfile, terms_accepted_at };
+  document.getElementById('termsGateOverlay').classList.add('hidden');
+  enterApp();
+}
+
+function enterApp(){
+  document.getElementById('mainView').classList.remove('hidden');
   getGeo();
   loadFeed();
   updateNotifBadge();
@@ -989,6 +1088,7 @@ async function doLogout(){
   await sb.auth.signOut();
   currentUser = null; currentProfile = null;
   document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('termsGateOverlay').classList.add('hidden');
   document.getElementById('authView').classList.remove('hidden');
   authMode = 'login'; renderAuth();
 }
