@@ -179,7 +179,6 @@
   .btn-reserve:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,0.2); }
 
   .auth-wrap{ padding:40px 24px; display:flex; flex-direction:column; gap:10px; }
-  .install-app-btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:calc(100% - 48px); margin:-6px 24px 24px; padding:13px; border-radius:14px; border:1.5px dashed var(--color-brand-interactive); background:#F2ECFF; color:var(--color-brand-interactive); font-family:'Work Sans',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer; }
   .auth-title{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:22px; color:var(--ink); text-align:center; margin-bottom:8px; }
   .terms-box{ max-height:150px; overflow-y:auto; border:1px solid var(--color-border-default); border-radius:12px; padding:10px 12px; margin-top:14px; background:var(--color-surface-subtle); font-size:11px; line-height:1.5; color:var(--color-text-secondary); }
   .terms-box p{ margin:0 0 10px; }
@@ -320,10 +319,6 @@
 
   <!-- Auth -->
   <div id="authView" class="auth-wrap hidden"></div>
-  <button id="installAppBtn" class="install-app-btn hidden" onclick="promptInstallApp()">
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 15v1.5A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
-    Installer l'application
-  </button>
 
   <!-- Main app -->
   <!-- Validation rétroactive des conditions (comptes créés avant leur ajout) -->
@@ -530,6 +525,32 @@
     </div>
   </div>
 
+  <!-- Mot de passe oublié -->
+  <div class="overlay hidden" id="forgotPasswordOverlay" style="z-index:410;">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">Mot de passe oublié</div>
+        <button class="x-btn" onclick="document.getElementById('forgotPasswordOverlay').classList.add('hidden')"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+      </div>
+      <p style="font-size:12.5px; color:rgba(43,33,64,0.65); margin-top:0;">Entre ton email, on t'envoie un lien pour choisir un nouveau mot de passe.</p>
+      <label>Email</label>
+      <input id="forgotEmail" type="email" placeholder="ex: toi@email.com">
+      <button class="btn-main" onclick="submitForgotPassword()">Envoyer le lien</button>
+      <div id="forgotPasswordMsg"></div>
+    </div>
+  </div>
+
+  <!-- Nouveau mot de passe (après avoir cliqué le lien reçu par email) -->
+  <div class="overlay hidden" id="newPasswordOverlay" style="z-index:900;">
+    <div class="sheet">
+      <div class="auth-title" style="font-size:18px;">Choisis un nouveau mot de passe</div>
+      <label>Nouveau mot de passe</label>
+      <input id="newPasswordInput" type="password" placeholder="8 caractères minimum">
+      <button class="btn-main" onclick="submitNewPassword()">Valider</button>
+      <div id="newPasswordMsg"></div>
+    </div>
+  </div>
+
   <!-- Fenêtre d'alerte stylée (remplace alert() natif) -->
   <div class="overlay hidden" id="appAlertOverlay" style="z-index:500;">
     <div class="sheet">
@@ -674,6 +695,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb;
 try{
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  sb.auth.onAuthStateChange((event, session) => {
+    if(event === 'PASSWORD_RECOVERY'){
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('newPasswordMsg').innerHTML = '';
+      document.getElementById('newPasswordOverlay').classList.remove('hidden');
+    }
+  });
 } catch(e){
   document.body.innerHTML = `<div style="padding:40px 24px; font-family:sans-serif; text-align:center;">
     <h2>Connexion impossible</h2>
@@ -962,6 +990,7 @@ function renderAuth(){
       <input id="liPassword" type="password" placeholder="••••••••">
       <button class="btn-main" onclick="doLogin()">Se connecter</button>
       <div id="authMsg"></div>
+      <div class="switch-link" onclick="openForgotPassword()">Mot de passe oublié ?</div>
       <div class="switch-link" onclick="authMode='signup'; renderAuth();">Pas encore de compte → en créer un</div>
     `;
   }
@@ -1005,12 +1034,34 @@ async function doLogin(){
   await onLoggedIn(data.user);
 }
 
+function openForgotPassword(){
+  document.getElementById('forgotEmail').value = document.getElementById('liEmail').value.trim();
+  document.getElementById('forgotPasswordMsg').innerHTML = '';
+  document.getElementById('forgotPasswordOverlay').classList.remove('hidden');
+}
+async function submitForgotPassword(){
+  const email = document.getElementById('forgotEmail').value.trim();
+  const msg = document.getElementById('forgotPasswordMsg');
+  if(!email){ msg.innerHTML = `<div class="msg err">Entre ton email.</div>`; return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  msg.innerHTML = `<div class="msg ok">✓ Si ce compte existe, un email vient d'être envoyé avec un lien pour choisir un nouveau mot de passe.</div>`;
+}
+async function submitNewPassword(){
+  const password = document.getElementById('newPasswordInput').value;
+  const msg = document.getElementById('newPasswordMsg');
+  if(!password || password.length < 8){ msg.innerHTML = `<div class="msg err">8 caractères minimum.</div>`; return; }
+  const { error } = await sb.auth.updateUser({ password });
+  if(error){ msg.innerHTML = `<div class="msg err">${error.message}</div>`; return; }
+  msg.innerHTML = `<div class="msg ok">✓ Mot de passe changé !</div>`;
+  setTimeout(()=>{ document.getElementById('newPasswordOverlay').classList.add('hidden'); }, 1200);
+}
+
 async function onLoggedIn(user){
   currentUser = user;
   const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
   currentProfile = profile;
   document.getElementById('authView').classList.add('hidden');
-  document.getElementById('installAppBtn').classList.add('hidden');
   document.getElementById('userPill').textContent = "✓ " + (profile?.name?.split(' ')[0] || 'Connecté');
 
   if(profile && !profile.terms_accepted_at){
@@ -1185,7 +1236,6 @@ async function doLogout(){
   document.getElementById('mainView').classList.add('hidden');
   document.getElementById('termsGateOverlay').classList.add('hidden');
   document.getElementById('authView').classList.remove('hidden');
-  if(deferredInstallPrompt && !isStandaloneAlready) document.getElementById('installAppBtn').classList.remove('hidden');
   authMode = 'login'; renderAuth();
 }
 
@@ -1824,7 +1874,6 @@ async function reserveItem(itemId, durationMinutes, offeredItemId){
     await sb.from('notifications').insert({
       user_id: itemRow.owner_id,
       type: 'reservation_incoming',
-      ref_id: itemId,
       message
     });
   }
@@ -2232,7 +2281,6 @@ async function validateReservation(resId, itemId, itemName){
   await sb.from('notifications').insert({
     user_id: res.receiver_id,
     type: 'address',
-    ref_id: itemId,
     message: `C'est validé, tu peux y aller ! Adresse pour venir chercher "${itemName}" : ${address || 'à demander au donneur'}${verifBadge}. Tu as ${fmtCountdown(minutes*60000)} pour passer le récupérer.`
   });
   loadMine();
@@ -2303,7 +2351,6 @@ async function sendTrocMessage(){
     await sb.from('notifications').insert({
       user_id: chatOtherId,
       type: 'message',
-      ref_id: chatReservationId,
       message: `Nouveau message dans votre discussion troc : "${content.slice(0,60)}${content.length>60?'…':''}"`
     });
   }
@@ -2323,38 +2370,23 @@ async function loadNotifs(){
     el.innerHTML = `<div class="empty">Rien pour l'instant. Tu seras prévenu ici dès que quelqu'un réserve un de tes objets.</div>`;
   } else {
     el.innerHTML = notifs.map(n => `
-      <div class="notif-card" id="notif-${n.id}" style="cursor:pointer;" onclick="handleNotifClick('${n.id}','${n.type}','${n.ref_id||''}')">
+      <div class="notif-card" id="notif-${n.id}">
         <div class="notif-head">
           <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
           <div style="flex:1;">
             <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : n.type==='alert' ? 'Alerte' : 'Notification'}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
           </div>
-          <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="event.stopPropagation(); dismissNotif('${n.id}')">${ICON.close}</button>
+          <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
         </div>
         <div class="notif-msg">${n.message}</div>
-        ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="event.stopPropagation(); dismissNotif('${n.id}'); switchView('mine'); document.getElementById('notifsOverlay').classList.add('hidden');">Valider maintenant →</button>` : ''}
+        ${n.type==='reservation_incoming' ? `<button class="notif-action" onclick="dismissNotif('${n.id}'); switchView('mine');">Valider maintenant →</button>` : ''}
       </div>
     `).join('');
   }
   // marque comme lu : le petit rond disparaît tout de suite, mais la notification reste visible ici 12h
   await sb.from('notifications').update({ read:true, read_at:new Date().toISOString() }).eq('user_id', currentUser.id).eq('read', false);
   updateNotifBadge();
-}
-async function handleNotifClick(id, type, refId){
-  document.getElementById('notifsOverlay').classList.add('hidden');
-  if(type === 'message' && refId){
-    const { data: res } = await sb.from('reservations').select('*').eq('id', refId).single();
-    if(res){
-      const { data: item } = await sb.from('items').select('owner_id').eq('id', res.item_id).single();
-      const otherId = (item && currentUser.id === res.receiver_id) ? item.owner_id : res.receiver_id;
-      const { data: otherProfile } = await sb.from('profiles').select('name').eq('id', otherId).single();
-      openTrocChat(refId, otherId, otherProfile?.name || 'la personne');
-      return;
-    }
-  }
-  if(type === 'alert'){ switchView('discover'); return; }
-  switchView('mine');
 }
 async function dismissNotif(id){
   await sb.from('notifications').delete().eq('id', id);
@@ -2378,22 +2410,6 @@ async function renderProfile(){
   const { count: givenCount } = await sb.from('items').select('id', {count:'exact', head:true}).eq('owner_id', currentUser.id).eq('status','attribue');
   const { count: receivedCount } = await sb.from('reservations').select('id', {count:'exact', head:true}).eq('receiver_id', currentUser.id).eq('donor_validated', true);
 
-  const { data: myReceivedRatings } = await sb.from('ratings').select('*').eq('rated_id', currentUser.id).order('created_at',{ascending:false});
-  let ratingsHtml = `<div class="empty">Pas encore d'avis reçu.</div>`;
-  if(myReceivedRatings && myReceivedRatings.length){
-    const raterIds = [...new Set(myReceivedRatings.map(r=>r.rater_id))];
-    const { data: raters } = await sb.from('profiles').select('id,name').in('id', raterIds);
-    const raterMap = Object.fromEntries((raters||[]).map(p=>[p.id,p.name]));
-    ratingsHtml = myReceivedRatings.map(r => `
-      <div class="item-row" style="align-items:flex-start;">
-        <div class="info">
-          <div class="item-name">${raterMap[r.rater_id] || 'Un membre'} <span class="rating-stars">${[1,2,3,4,5].map(n=>n<=r.stars?ICON.star:ICON.starOutline).join('')}</span></div>
-          ${r.comment ? `<div class="item-sub" style="white-space:normal;">${r.comment}</div>` : ''}
-        </div>
-      </div>
-    `).join('');
-  }
-
   el.innerHTML = `
     <div class="profile-head">
       <div class="profile-avatar">${initials}</div>
@@ -2409,12 +2425,6 @@ async function renderProfile(){
       <div class="impact-card"><div class="impact-num">${givenCount||0}</div><div class="impact-label">objet${givenCount>1?'s':''} donné${givenCount>1?'s':''}</div></div>
       <div class="impact-card"><div class="impact-num">${receivedCount||0}</div><div class="impact-label">objet${receivedCount>1?'s':''} reçu${receivedCount>1?'s':''}</div></div>
     </div>
-
-    <div class="section-title">Avis reçus</div>
-    ${ratingsHtml}
-
-    <div class="section-title">Installer l'application</div>
-    <p style="font-size:11.5px; color:rgba(43,33,64,0.6); margin-top:0;">Pas de bouton d'installation automatique ? Cherche <strong>"Ajouter à l'écran d'accueil"</strong> ou <strong>"Installer"</strong> dans le menu de ton navigateur (souvent les trois points, ou le bouton Partager sur iPhone). Toc Toc s'ouvrira alors comme une vraie appli, avec son icône.</p>
 
     <div class="section-title">Favoris et alertes</div>
     <button class="btn btn-ghost" style="width:100%;" onclick="openFavoritesOverlay()">${ICON.heartFill} Mes favoris</button>
@@ -2567,27 +2577,6 @@ if(sb) init();
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
-
-// ================= INSTALLATION PWA =================
-let deferredInstallPrompt = null;
-const isStandaloneAlready = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  if(!isStandaloneAlready && !document.getElementById('authView').classList.contains('hidden')){
-    document.getElementById('installAppBtn').classList.remove('hidden');
-  }
-});
-async function promptInstallApp(){
-  if(!deferredInstallPrompt) return;
-  document.getElementById('installAppBtn').classList.add('hidden');
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-}
-window.addEventListener('appinstalled', () => {
-  document.getElementById('installAppBtn').classList.add('hidden');
-});
 </script>
 </body>
 </html>
