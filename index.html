@@ -2141,7 +2141,7 @@ function renderPublish(){
     </div>
     <label>Horaire disponible pour venir chercher</label>
     <input type="time" id="pPickup" value="${pub.pickup}" oninput="pub.pickup=this.value">
-    <button class="btn-main" onclick="submitPublish()">${editingItemId ? '✓ Enregistrer les modifications' : (cat==='enchere' ? '🔨 Lancer l\\'enchère' : '🚀 Mettre en ligne')}</button>
+    <button class="btn-main" onclick="submitPublish()">${editingItemId ? '✓ Enregistrer les modifications' : (cat==='enchere' ? '🔨 Lancer l\'enchère' : '🚀 Mettre en ligne')}</button>
     <div id="pubMsg"></div>
   `;
 }
