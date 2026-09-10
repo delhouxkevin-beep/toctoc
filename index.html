@@ -434,18 +434,13 @@
     <!-- Enchères -->
     <div id="viewEncheres" class="hidden" style="padding:0 18px;">
       <div class="val-card" style="margin:14px 0 10px;"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> <strong>Mode test</strong> — enchérir ici ne débite aucun argent réel. On branchera les vrais paiements plus tard.</div>
-      <div style="display:flex; gap:8px; margin:0 0 14px;">
-        <button class="publish-btn" style="flex:1; margin:0;" onclick="openPublishAuction()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier</button>
-        <button class="radius-pill" id="encheresModeBtn" style="flex-shrink:0;" onclick="toggleEncheresMode()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Swipe</button>
-      </div>
-      <div id="encheresList"><div class="empty">Chargement…</div></div>
-      <div id="encheresStackWrap" class="hidden">
-        <div class="stack" id="encheresStack" style="margin:0 0 14px;"></div>
-        <div class="swbar" style="margin:0 0 12px;">
-          <div class="swbar-actions">
-            <button class="btn-pass2" onclick="passEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
-            <button class="btn-reserve" onclick="bidEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> Enchérir</button>
-          </div>
+      <button class="publish-btn" style="margin:0 0 14px;" onclick="openPublishAuction()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier une enchère</button>
+      <div class="subcat-row" id="encheresSubcatRow" style="padding:0 0 12px;"></div>
+      <div class="stack" id="encheresStack" style="margin:0 0 14px;"></div>
+      <div class="swbar" style="margin:0 0 12px;">
+        <div class="swbar-actions">
+          <button class="btn-pass2" onclick="passEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+          <button class="btn-reserve" onclick="bidEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> Enchérir</button>
         </div>
       </div>
     </div>
@@ -2130,7 +2125,7 @@ function renderPublish(){
     ${pubPhotos.length ? `<p class="photo-pick-count">${pubPhotos.length} photo${pubPhotos.length>1?'s':''} ajoutée${pubPhotos.length>1?'s':''}</p>` : ''}
     <label>Description</label>
     <textarea id="pDesc" oninput="pub.desc=this.value">${pub.desc}</textarea>
-    ${cat==='objets' ? `
+    ${(cat==='objets' || cat==='enchere') ? `
     <label>Catégorie <span class="field-optional">(obligatoire)</span></label>
     <select id="pSubcat" onchange="pub.subcategory=this.value">
       <option value="" ${pub.subcategory===''?'selected':''} disabled>Choisis une catégorie…</option>
@@ -2178,7 +2173,7 @@ async function submitPublish(){
     msg.innerHTML = `<div class="msg err">${ICON.warning} Confirme d'abord ton adresse exacte avec ta position GPS (${ICON.pin} en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
     return;
   }
-  if(cat==='objets' && !pub.subcategory){
+  if((cat==='objets' || cat==='enchere') && !pub.subcategory){
     msg.innerHTML = `<div class="msg err">Choisis une catégorie avant de publier.</div>`;
     return;
   }
@@ -2203,7 +2198,7 @@ async function submitPublish(){
   if(editingItemId){
     const { error } = await sb.from('items').update({
       name, description: pub.desc, etat: pub.etat,
-      subcategory: cat==='objets' ? pub.subcategory : null,
+      subcategory: (cat==='objets' || cat==='enchere') ? pub.subcategory : null,
       photo_url: photoUrl, photo_urls: photoUrls,
       pickup_time: pub.pickup, duration_hours: pub.duration
     }).eq('id', editingItemId);
@@ -2216,7 +2211,7 @@ async function submitPublish(){
   const { error } = await sb.from('items').insert({
     owner_id: currentUser.id,
     name, description: pub.desc, etat: pub.etat, category: cat,
-    subcategory: cat==='objets' ? pub.subcategory : null,
+    subcategory: (cat==='objets' || cat==='enchere') ? pub.subcategory : null,
     photo_url: photoUrl, photo_urls: photoUrls,
     city: currentProfile.city,
     postal_code: currentProfile.postal_code,
@@ -2240,31 +2235,40 @@ async function submitPublish(){
 }
 
 // ================= ENCHÈRES =================
+let encheresAllItems = [];
 let encheresItems = [];
-let encheresMyBidItemIds = new Set();
 let auctionDetailItem = null;
-let encheresMode = 'list'; // 'list' | 'swipe'
+let encheresSubcat = 'Toutes';
 let encheresStackIndex = 0;
 
-function toggleEncheresMode(){
-  encheresMode = encheresMode === 'list' ? 'swipe' : 'list';
-  document.getElementById('encheresList').classList.toggle('hidden', encheresMode!=='list');
-  document.getElementById('encheresStackWrap').classList.toggle('hidden', encheresMode!=='swipe');
-  document.getElementById('encheresModeBtn').innerHTML = encheresMode==='list'
-    ? `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Swipe`
-    : `${ICON.box} Liste`;
-  if(encheresMode==='swipe'){ encheresStackIndex = 0; renderEncheresStack(); }
+function renderEncheresSubcatRow(){
+  const row = document.getElementById('encheresSubcatRow');
+  if(!row) return;
+  const cats = ['Toutes', ...SUBCATEGORIES];
+  row.innerHTML = cats.map(c=>`<button class="subcat-chip ${encheresSubcat===c?'active':''}" onclick="setEncheresSubcat('${c}')">${c}</button>`).join('');
+}
+function setEncheresSubcat(c){
+  encheresSubcat = c;
+  renderEncheresSubcatRow();
+  applyEncheresSubcatFilter();
+}
+function applyEncheresSubcatFilter(){
+  encheresItems = encheresSubcat==='Toutes' ? encheresAllItems : encheresAllItems.filter(it=>it.subcategory===encheresSubcat);
+  document.getElementById('itemCount').textContent = encheresItems.length + " enchère(s)";
+  encheresStackIndex = 0;
+  renderEncheresStack();
 }
 
 async function loadEncheres(){
-  const el = document.getElementById('encheresList');
-  el.innerHTML = `<div class="empty">Chargement…</div>`;
+  renderEncheresSubcatRow();
+  const stackEl = document.getElementById('encheresStack');
+  if(stackEl) stackEl.innerHTML = `<div class="empty">Chargement…</div>`;
   const { data: items, error } = await sb.from('items')
     .select('*')
     .eq('category','enchere')
     .eq('status','disponible')
     .order('created_at', { ascending:false });
-  if(error){ el.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
+  if(error){ if(stackEl) stackEl.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
 
   let all = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id));
   if(userPos && radiusKm !== 'all'){
@@ -2273,60 +2277,14 @@ async function loadEncheres(){
       return d==null || d <= radiusKm;
     });
   }
-  encheresItems = all;
-  document.getElementById('itemCount').textContent = encheresItems.length + " enchère(s)";
+  encheresAllItems = all;
 
   const ownerIds = [...new Set(all.map(i=>i.owner_id))];
   const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
   (owners||[]).forEach(o => { ownerMap[o.id] = { ...(ownerMap[o.id]||{}), ...o }; });
   await attachRatings(ownerIds);
 
-  encheresMyBidItemIds = new Set();
-  const itemIds = all.map(i=>i.id);
-  if(currentUser && itemIds.length){
-    const { data: myBids } = await sb.from('bids').select('item_id').eq('bidder_id', currentUser.id).in('item_id', itemIds);
-    encheresMyBidItemIds = new Set((myBids||[]).map(b=>b.item_id));
-  }
-  encheresStackIndex = 0;
-  renderEncheresList();
-  renderEncheresStack();
-}
-
-function renderEncheresList(){
-  const el = document.getElementById('encheresList');
-  if(encheresItems.length===0){
-    el.innerHTML = `<div class="empty">Aucune enchère en cours près de toi pour l'instant.</div>`;
-    return;
-  }
-  el.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">` + encheresItems.map(it => {
-    const price = it.current_price ?? it.starting_price;
-    const leading = currentUser && it.current_bidder_id === currentUser.id;
-    const outbid = currentUser && !leading && encheresMyBidItemIds.has(it.id);
-    const tag = leading ? `<div class="best-match-tag" style="background:var(--teal);">Tu es en tête</div>` : outbid ? `<div class="best-match-tag" style="background:var(--coral);">Dépassé</div>` : '';
-    const photoBadge = (it.photo_urls && it.photo_urls.length>1) ? `<div class="thumb-photo-badge" style="top:8px; right:8px;">${ICON.camera}<span>${it.photo_urls.length}</span></div>` : '';
-    const owner = ownerMap[it.owner_id] || {};
-    const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
-    return `
-      <div class="card ${leading?'best-match':''}" style="cursor:pointer;" onclick="openAuctionDetail('${it.id}')">
-        ${tag}
-        <div style="height:150px; position:relative; background:linear-gradient(160deg,#F2ECFF,var(--purple));">
-          ${it.photo_url ? `<img src="${it.photo_url}" alt="" style="width:100%; height:100%; object-fit:cover;">` : `<div class="noimg" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:34px;">${ICON.gavel}</div>`}
-          ${photoBadge}
-        </div>
-        <div style="padding:12px 14px;">
-          <div class="card-title">${it.name}</div>
-          <div class="card-meta" style="margin-top:2px;">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-            <div>
-              <div style="font-size:10.5px; color:var(--color-text-secondary);">Enchère actuelle</div>
-              <div style="font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink);">${price} €</div>
-            </div>
-            <div class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="⏳ "></div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('') + `</div>`;
+  applyEncheresSubcatFilter();
 }
 
 // ---- Mode swipe pour les enchères ----
@@ -2442,7 +2400,7 @@ function bidEncheresTop(){
 }
 
 async function openAuctionDetail(itemId){
-  const it = encheresItems.find(i=>i.id===itemId) || (mineDataCache?.myItems||[]).find(i=>i.id===itemId);
+  const it = encheresItems.find(i=>i.id===itemId) || encheresAllItems.find(i=>i.id===itemId) || (mineDataCache?.myItems||[]).find(i=>i.id===itemId) || (mineDataCache?.myBidItems||[]).find(i=>i.id===itemId);
   if(!it) return;
   auctionDetailItem = it;
   document.getElementById('auctionOverlay').classList.remove('hidden');
@@ -2451,6 +2409,7 @@ async function openAuctionDetail(itemId){
 function closeAuctionOverlay(){
   document.getElementById('auctionOverlay').classList.add('hidden');
   auctionDetailItem = null;
+  if(currentView==='mine') loadMine();
 }
 function openAuctionLightbox(){
   if(!auctionDetailItem) return;
@@ -2538,13 +2497,9 @@ async function placeBid(){
     });
   }
   auctionDetailItem = { ...it, current_price: amount, current_bidder_id: currentUser.id };
-  const idx = encheresItems.findIndex(i=>i.id===it.id);
-  if(idx>=0) encheresItems[idx] = auctionDetailItem;
-  encheresMyBidItemIds.add(it.id);
   btn.disabled = false;
   await renderAuctionDetail();
-  renderEncheresList();
-  renderEncheresStack();
+  await loadEncheres();
 }
 
 // ================= MES OBJETS =================
@@ -2596,11 +2551,22 @@ async function loadMine(){
     : { data: [] };
   const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i]));
 
-  // noms des interlocuteurs (pour les boutons "Discuter" côté troc, et les gagnants d'enchères)
+  // Enchères en cours sur lesquelles j'ai misé (pas encore attribuées, donc pas encore une "réservation")
+  const { data: myBidRows } = await sb.from('bids').select('item_id,amount').eq('bidder_id', currentUser.id).order('amount',{ascending:false});
+  const myBidAmountMap = {};
+  (myBidRows||[]).forEach(b => { if(myBidAmountMap[b.item_id]===undefined) myBidAmountMap[b.item_id] = b.amount; });
+  const myBidItemIds = [...new Set((myBidRows||[]).map(b=>b.item_id))];
+  const { data: myBidItemsRaw } = myBidItemIds.length
+    ? await sb.from('items').select('*').in('id', myBidItemIds)
+    : { data: [] };
+  const myBidItems = (myBidItemsRaw||[]).filter(it => it.category==='enchere' && it.status==='disponible');
+
+  // noms des interlocuteurs (pour les boutons "Discuter" côté troc, et les gagnants/vendeurs d'enchères)
   const peopleIds = [...new Set([
     ...(incomingRes||[]).map(r=>r.receiver_id),
     ...(resItems||[]).map(i=>i.owner_id),
-    ...(myItems||[]).map(i=>i.current_bidder_id)
+    ...(myItems||[]).map(i=>i.current_bidder_id),
+    ...myBidItems.map(i=>i.owner_id)
   ])].filter(Boolean);
   const { data: people } = peopleIds.length
     ? await sb.from('profiles').select('id,name').in('id', peopleIds)
@@ -2610,7 +2576,7 @@ async function loadMine(){
   const { data: myRatings } = await sb.from('ratings').select('reservation_id').eq('rater_id', currentUser.id);
   const ratedResIds = new Set((myRatings||[]).map(r=>r.reservation_id));
 
-  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap, peopleMap, ratedResIds };
+  mineDataCache = { myItems: myItems||[], incomingRes: incomingRes||[], myRes: myRes||[], resItemMap, offeredItemMap, peopleMap, ratedResIds, myBidItems, myBidAmountMap };
   renderMine();
 }
 
@@ -2738,11 +2704,46 @@ function renderMine(){
       const done = it && it.status === 'attribue';
       return it && it.category===mineCat && (!done || !mineDataCache.ratedResIds.has(r.id));
     });
-    if(filteredRes.length===0){
+    const trackedBids = mineCat==='enchere' ? (mineDataCache.myBidItems||[]) : [];
+    if(filteredRes.length===0 && trackedBids.length===0){
       el.innerHTML = `<div class="empty">Rien dans cette catégorie.</div>`;
       return;
     }
-    el.innerHTML = filteredRes.map(r => {
+
+    const trackedHtml = trackedBids.map(it => {
+      const myBid = mineDataCache.myBidAmountMap?.[it.id];
+      const leading = it.current_bidder_id === currentUser.id;
+      const expired = isItemExpired(it);
+      const statusLabel = expired ? (leading ? 'GAGNÉ' : 'PERDU') : (leading ? 'EN TÊTE' : 'DÉPASSÉ');
+      const statusClass = expired ? (leading ? 'pending' : 'offline') : (leading ? 'online' : 'pending');
+      const ownerName = (mineDataCache.peopleMap[it.owner_id] || 'le vendeur').replace(/'/g,"\\'");
+      const photoBadge = (it.photo_urls && it.photo_urls.length>1) ? `<div class="thumb-photo-badge">${ICON.camera}<span>${it.photo_urls.length}</span></div>` : '';
+      const thumb = `<div class="thumb-wrap">
+        ${it.photo_url ? `<img class="thumb" src="${it.photo_url}" alt="">` : `<div class="thumb-empty">${ICON.gavel}</div>`}
+        ${photoBadge}
+      </div>`;
+      const countdown = !expired ? `<div class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="Fin dans "></div>` : '';
+      const subText = `Ta mise : ${myBid ?? '—'} € · Enchère actuelle : ${it.current_price ?? it.starting_price} €`;
+      const extraContent = expired
+        ? (leading ? `<div class="msg ok">✓ Tu as remporté cette enchère, en attente que le vendeur t'envoie son adresse.</div>` : `<div class="empty" style="padding:6px 0;">Un autre membre a proposé plus — enchère terminée.</div>`)
+        : (leading
+          ? `<div class="empty" style="padding:6px 0;">Tu es en tête, ta mise est engagée et ne peut plus être retirée.</div>`
+          : `<button class="withdraw-btn" style="width:100%;" onclick="cancelMyBid('${it.id}','${it.name.replace(/'/g,"\\'")}')">Retirer mon enchère</button>`);
+      return `
+        <div class="item-row has-extra" style="cursor:pointer;" onclick="openAuctionDetail('${it.id}')">
+          ${thumb}
+          <div class="info">
+            <div class="item-name">${it.name}</div>
+            <div class="item-sub">${subText}</div>
+            ${catBadge(it.category)} ${countdown}
+          </div>
+          <div class="status-box ${statusClass}">${statusLabel}</div>
+        </div>
+        <div class="item-extra">${extraContent}</div>
+      `;
+    }).join('');
+
+    const resHtml = filteredRes.map(r => {
       const it = resItemMap[r.item_id];
       if(!it) return '';
       const offered = r.offered_item_id ? myItems.find(i=>i.id===r.offered_item_id) : null;
@@ -2786,6 +2787,7 @@ function renderMine(){
         ${extraContent ? `<div class="item-extra">${extraContent}</div>` : ''}
       `;
     }).join('');
+    el.innerHTML = trackedHtml + resHtml;
   }
 }
 
@@ -2951,6 +2953,17 @@ async function cancelMyReservation(resId, itemId, itemName){
       message: `La réservation de "${itemName}" a été annulée par la personne qui l'avait réservé. L'objet est de nouveau disponible.`
     });
   }
+  loadMine();
+}
+
+async function cancelMyBid(itemId, itemName){
+  const { data: it } = await sb.from('items').select('starting_price,current_bidder_id').eq('id', itemId).single();
+  if(it && it.current_bidder_id === currentUser.id){
+    await showAppAlert("Tu es en tête sur cette enchère, ta mise est engagée et ne peut plus être retirée.");
+    return;
+  }
+  if(!(await showAppConfirm(`Retirer ta mise sur "${itemName}" ?`))) return;
+  await sb.from('bids').delete().eq('item_id', itemId).eq('bidder_id', currentUser.id);
   loadMine();
 }
 
