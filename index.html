@@ -431,36 +431,11 @@
       <div id="mineContent" style="padding:0 18px;"></div>
     </div>
 
-    <!-- Enchères (bientôt) -->
+    <!-- Enchères -->
     <div id="viewEncheres" class="hidden" style="padding:0 18px;">
-      <div class="card" style="padding:28px 22px; text-align:center; margin-top:18px; background:linear-gradient(160deg, #F2ECFF, var(--paper) 65%);">
-        <div class="end-card-icon" style="margin:0 auto 14px;">
-          <svg width="26" height="26" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 16.5h6"/>
-            <path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/>
-            <path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/>
-          </svg>
-        </div>
-        <div class="end-card-title">Enchères — bientôt disponible</div>
-        <div class="end-card-text">Un onglet pour vendre tes objets aux enchères, avec enchérir en un clic, arrive prochainement. Voici un aperçu de ce à quoi ça ressemblera :</div>
-      </div>
-
-      <div class="card" style="margin-top:14px; opacity:0.75; pointer-events:none;">
-        <div style="height:160px; background:linear-gradient(160deg,#F2ECFF,var(--purple)); display:flex; align-items:center; justify-content:center; font-size:36px;">🪑</div>
-        <div style="padding:12px 14px;">
-          <div class="card-title">Fauteuil vintage — exemple</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-            <div>
-              <div style="font-size:10.5px; color:var(--color-text-secondary);">Enchère actuelle</div>
-              <div style="font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink);">14 €</div>
-            </div>
-            <div class="countdown-badge">⏳ 2h 14m</div>
-          </div>
-          <button class="btn-main" style="width:100%; margin-top:12px;" disabled>Enchérir en un clic — bientôt</button>
-        </div>
-      </div>
-
-      <div class="empty" style="margin-top:4px;">On te préviendra dès que ce sera actif.</div>
+      <div class="val-card" style="margin:14px 0 10px;"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> <strong>Mode test</strong> — enchérir ici ne débite aucun argent réel. On branchera les vrais paiements plus tard.</div>
+      <button class="publish-btn" style="margin:0 0 14px;" onclick="openPublishAuction()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier une enchère</button>
+      <div id="encheresList"><div class="empty">Chargement…</div></div>
     </div>
 
     <!-- Profil -->
@@ -498,6 +473,41 @@
         <button class="x-btn" onclick="closePublish()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
       </div>
       <div id="publishBody"></div>
+    </div>
+  </div>
+
+  <!-- Détail d'une enchère + barre de mise -->
+  <div class="overlay hidden" id="auctionOverlay" style="z-index:400;">
+    <div class="sheet" style="padding:0; max-height:92vh; display:flex; flex-direction:column;">
+      <div style="position:relative; flex-shrink:0;">
+        <img id="aucImg" src="" alt="" style="width:100%; height:210px; object-fit:cover; border-radius:18px 24px 0 0; cursor:zoom-in; display:block;" onclick="openAuctionLightbox()">
+        <button class="x-btn" style="position:absolute; top:12px; right:12px;" onclick="closeAuctionOverlay()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+        <div id="aucPhotoBadge" class="thumb-photo-badge hidden" style="top:12px; left:12px; font-size:11px; padding:4px 8px;"></div>
+      </div>
+      <div style="padding:16px 18px; overflow-y:auto; flex:1;">
+        <div class="card-title" id="aucName" style="font-size:18px;"></div>
+        <div class="card-meta" id="aucMeta" style="margin-top:4px;"></div>
+        <p id="aucDesc" style="font-size:13px; color:var(--color-text-secondary); line-height:1.4;"></p>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin:10px 0;">
+          <div>
+            <div style="font-size:10.5px; color:var(--color-text-secondary);">Enchère actuelle</div>
+            <div id="aucPrice" style="font-family:'Baloo 2',sans-serif; font-weight:700; font-size:24px; color:var(--ink);"></div>
+          </div>
+          <div id="aucCountdown"></div>
+        </div>
+        <div id="aucLeaderNote"></div>
+        <div class="section-title" style="margin-top:16px;">Dernières mises</div>
+        <div id="aucBidHistory"></div>
+      </div>
+      <div class="swbar" style="margin:0 14px 14px; flex-shrink:0;" id="aucBidBar">
+        <div class="swbar-label"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> Ta mise — mode test, sans paiement</div>
+        <div class="swbar-slider">
+          <input type="range" id="aucBidSlider" oninput="onAucSliderInput(this.value)">
+          <div class="swbar-val" id="aucBidVal">0 €</div>
+        </div>
+        <div class="swbar-ticks"><span id="aucTickMin"></span><span id="aucTickMax"></span></div>
+        <button class="btn-reserve" style="width:100%;" id="aucBidBtn" onclick="placeBid()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> Enchérir</button>
+      </div>
     </div>
   </div>
 
@@ -769,6 +779,7 @@ const ICON = {
   heartFill:  `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" stroke="none"><path d="M10 17s-6.5-4-6.5-8.5A3.7 3.7 0 0110 5.8 3.7 3.7 0 0116.5 8.5C16.5 13 10 17 10 17z"/></svg>`,
   flag:       `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v14"/><path d="M5 4h9l-2 3 2 3H5"/></svg>`,
   trash2:     `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12"/><path d="M8 6V4.5h4V6"/><path d="M5.5 6l.6 9a1.5 1.5 0 0 0 1.5 1.4h4.8a1.5 1.5 0 0 0 1.5-1.4l.6-9"/></svg>`,
+  gavel:      `<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg>`,
 };
 // ================= CONFIG SUPABASE =================
 const SUPABASE_URL = "https://oqwmoimywpcedzlqyqfp.supabase.co";
@@ -795,6 +806,7 @@ let currentUser = null;
 let currentProfile = null;
 let userPos = null; // {lat, lng}
 let category = 'objets';
+let pubCategoryOverride = null; // force 'enchere' quand on publie depuis l'onglet Enchères
 let authMode = 'login'; // 'login' | 'signup'
 let currentView = 'discover';
 
@@ -845,6 +857,7 @@ const CAT_BADGE = {
   objets:     { label:'Objet',      icon: ICON.box  },
   nourriture: { label:'Nourriture', icon: ICON.food },
   troc:       { label:'Troc',       icon: ICON.swap },
+  enchere:    { label:'Enchère',    icon: ICON.gavel },
 };
 function catBadge(cat){
   const c = CAT_BADGE[cat];
@@ -1357,6 +1370,7 @@ function switchView(v){
   document.getElementById('subcatRow').classList.toggle('hidden', v!=='discover');
   if(v!=='discover') document.getElementById('radiusPanel').classList.add('hidden');
   if(v==='mine') loadMine();
+  if(v==='encheres') loadEncheres();
   if(v==='profile') renderProfile();
 }
 
@@ -2037,10 +2051,24 @@ async function openPublish(){
     openLocationSheet();
     return;
   }
-  editingItemId = null; editingItemCategory = null;
+  editingItemId = null; editingItemCategory = null; pubCategoryOverride = null;
   pubPhotos = [];
-  pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'' };
+  pub = { desc:'', etat:'Bon état', duration:12, pickup:'', subcategory:'', startPrice:'', minIncrement:1 };
   document.getElementById('publishTitle').textContent = 'Nouvel objet';
+  document.getElementById('publishOverlay').classList.remove('hidden');
+  renderPublish();
+}
+
+async function openPublishAuction(){
+  if(!currentProfile?.address_verified){
+    await showAppAlert("Confirme d'abord ton adresse exacte avec ta position GPS avant de publier une enchère — c'est indispensable pour que les distances s'affichent correctement.");
+    openLocationSheet();
+    return;
+  }
+  editingItemId = null; editingItemCategory = null; pubCategoryOverride = 'enchere';
+  pubPhotos = [];
+  pub = { desc:'', etat:'Bon état', duration:24, pickup:'', subcategory:'', startPrice:'', minIncrement:1 };
+  document.getElementById('publishTitle').textContent = 'Nouvelle enchère';
   document.getElementById('publishOverlay').classList.remove('hidden');
   renderPublish();
 }
@@ -2050,6 +2078,7 @@ async function openEditItem(itemId){
   if(!it) return;
   editingItemId = itemId;
   editingItemCategory = it.category;
+  pubCategoryOverride = null;
   const urls = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
   pubPhotos = urls.map(url => ({ url }));
   pub = { desc: it.description||'', etat: it.etat||'Bon état', duration: it.duration_hours||12, pickup: it.pickup_time||'', subcategory: it.subcategory||'' };
@@ -2060,13 +2089,14 @@ async function openEditItem(itemId){
 
 function closePublish(){
   document.getElementById('publishOverlay').classList.add('hidden');
-  editingItemId = null; editingItemCategory = null;
+  editingItemId = null; editingItemCategory = null; pubCategoryOverride = null;
 }
 
 function renderPublish(){
   const body = document.getElementById('publishBody');
-  const cat = editingItemId ? editingItemCategory : category;
+  const cat = editingItemId ? editingItemCategory : (pubCategoryOverride || category);
   body.innerHTML = `
+    ${cat==='enchere' ? `<div class="val-card" style="margin-top:0;">${ICON.gavel} Mode test — les enchères ne débitent aucun argent réel pour l'instant.</div>` : ''}
     ${pubPhotos.length ? `<div class="photo-picker-row">${pubPhotos.map((p,i)=>`
       <div class="photo-picker-thumb">
         <img src="${p.url || p.previewUrl}" alt="">
@@ -2099,13 +2129,19 @@ function renderPublish(){
     <div class="chip-row" id="etatChips">
       ${['Neuf','Très bon état','Bon état','Usé'].map(e=>`<button class="chip ${pub.etat===e?'active':''}" onclick="setEtat('${e}')">${e}</button>`).join('')}
     </div>
-    <label>Temps en ligne</label>
+    ${(cat==='enchere' && !editingItemId) ? `
+    <label>Prix de départ (€)</label>
+    <input type="number" min="0" step="0.5" id="pStartPrice" value="${pub.startPrice}" oninput="pub.startPrice=this.value" placeholder="ex: 10">
+    <label>Mise minimum entre deux enchères (€)</label>
+    <input type="number" min="0.5" step="0.5" id="pMinIncrement" value="${pub.minIncrement}" oninput="pub.minIncrement=this.value">
+    ` : ''}
+    <label>${cat==='enchere' ? "Durée de l'enchère" : 'Temps en ligne'}</label>
     <div class="chip-row" id="durChips">
-      ${[6,12,24].map(h=>`<button class="chip ${pub.duration===h?'active':''}" onclick="setDur(${h})">${h}h</button>`).join('')}
+      ${(cat==='enchere' ? [12,24,48] : [6,12,24]).map(h=>`<button class="chip ${pub.duration===h?'active':''}" onclick="setDur(${h})">${h}h</button>`).join('')}
     </div>
     <label>Horaire disponible pour venir chercher</label>
     <input type="time" id="pPickup" value="${pub.pickup}" oninput="pub.pickup=this.value">
-    <button class="btn-main" onclick="submitPublish()">${editingItemId ? '✓ Enregistrer les modifications' : '🚀 Mettre en ligne'}</button>
+    <button class="btn-main" onclick="submitPublish()">${editingItemId ? '✓ Enregistrer les modifications' : (cat==='enchere' ? '🔨 Lancer l\\'enchère' : '🚀 Mettre en ligne')}</button>
     <div id="pubMsg"></div>
   `;
 }
@@ -2125,13 +2161,17 @@ function setDur(h){ pub.duration=h; renderPublish(); }
 async function submitPublish(){
   if(!currentUser) return;
   const msg = document.getElementById('pubMsg');
-  const cat = editingItemId ? editingItemCategory : category;
+  const cat = editingItemId ? editingItemCategory : (pubCategoryOverride || category);
   if(!currentProfile?.address_verified){
     msg.innerHTML = `<div class="msg err">${ICON.warning} Confirme d'abord ton adresse exacte avec ta position GPS (${ICON.pin} en haut de "Découvrir") avant de publier — indispensable pour calculer les distances correctement.</div>`;
     return;
   }
   if(cat==='objets' && !pub.subcategory){
     msg.innerHTML = `<div class="msg err">Choisis une catégorie avant de publier.</div>`;
+    return;
+  }
+  if(cat==='enchere' && !editingItemId && (!pub.startPrice || Number(pub.startPrice) <= 0)){
+    msg.innerHTML = `<div class="msg err">Indique un prix de départ pour ton enchère.</div>`;
     return;
   }
   msg.innerHTML = `<div class="msg ok">${editingItemId ? 'Enregistrement…' : 'Publication en cours…'}</div>`;
@@ -2163,20 +2203,207 @@ async function submitPublish(){
 
   const { error } = await sb.from('items').insert({
     owner_id: currentUser.id,
-    name, description: pub.desc, etat: pub.etat, category,
-    subcategory: category==='objets' ? pub.subcategory : null,
+    name, description: pub.desc, etat: pub.etat, category: cat,
+    subcategory: cat==='objets' ? pub.subcategory : null,
     photo_url: photoUrl, photo_urls: photoUrls,
     city: currentProfile.city,
     postal_code: currentProfile.postal_code,
     lat: currentProfile.lat, lng: currentProfile.lng,
     pickup_time: pub.pickup, duration_hours: pub.duration,
-    status: 'disponible'
+    status: 'disponible',
+    starting_price: cat==='enchere' ? Number(pub.startPrice) : null,
+    current_price: cat==='enchere' ? Number(pub.startPrice) : null,
+    min_increment: cat==='enchere' ? (Number(pub.minIncrement)||1) : null
   });
   if(error){ msg.innerHTML = `<div class="msg err">Erreur : ${error.message}</div>`; return; }
   checkAlertsForNewItem({ name });
   closePublish();
-  switchView('discover');
-  loadFeed();
+  if(cat==='enchere'){
+    switchView('encheres');
+    loadEncheres();
+  } else {
+    switchView('discover');
+    loadFeed();
+  }
+}
+
+// ================= ENCHÈRES =================
+let encheresItems = [];
+let encheresMyBidItemIds = new Set();
+let auctionDetailItem = null;
+
+async function loadEncheres(){
+  const el = document.getElementById('encheresList');
+  el.innerHTML = `<div class="empty">Chargement…</div>`;
+  const { data: items, error } = await sb.from('items')
+    .select('*')
+    .eq('category','enchere')
+    .eq('status','disponible')
+    .order('created_at', { ascending:false });
+  if(error){ el.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
+
+  let all = (items||[]).filter(it => !(currentUser && it.owner_id === currentUser.id));
+  if(userPos && radiusKm !== 'all'){
+    all = all.filter(it => {
+      const d = haversine(userPos.lat, userPos.lng, it.lat, it.lng);
+      return d==null || d <= radiusKm;
+    });
+  }
+  encheresItems = all;
+
+  const ownerIds = [...new Set(all.map(i=>i.owner_id))];
+  const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
+  (owners||[]).forEach(o => { ownerMap[o.id] = { ...(ownerMap[o.id]||{}), ...o }; });
+  await attachRatings(ownerIds);
+
+  encheresMyBidItemIds = new Set();
+  const itemIds = all.map(i=>i.id);
+  if(currentUser && itemIds.length){
+    const { data: myBids } = await sb.from('bids').select('item_id').eq('bidder_id', currentUser.id).in('item_id', itemIds);
+    encheresMyBidItemIds = new Set((myBids||[]).map(b=>b.item_id));
+  }
+  renderEncheresList();
+}
+
+function renderEncheresList(){
+  const el = document.getElementById('encheresList');
+  if(encheresItems.length===0){
+    el.innerHTML = `<div class="empty">Aucune enchère en cours près de toi pour l'instant.</div>`;
+    return;
+  }
+  el.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">` + encheresItems.map(it => {
+    const price = it.current_price ?? it.starting_price;
+    const leading = currentUser && it.current_bidder_id === currentUser.id;
+    const outbid = currentUser && !leading && encheresMyBidItemIds.has(it.id);
+    const tag = leading ? `<div class="best-match-tag" style="background:var(--teal);">Tu es en tête</div>` : outbid ? `<div class="best-match-tag" style="background:var(--coral);">Dépassé</div>` : '';
+    const photoBadge = (it.photo_urls && it.photo_urls.length>1) ? `<div class="thumb-photo-badge" style="top:8px; right:8px;">${ICON.camera}<span>${it.photo_urls.length}</span></div>` : '';
+    const owner = ownerMap[it.owner_id] || {};
+    return `
+      <div class="card ${leading?'best-match':''}" style="cursor:pointer;" onclick="openAuctionDetail('${it.id}')">
+        ${tag}
+        <div style="height:150px; position:relative; background:linear-gradient(160deg,#F2ECFF,var(--purple));">
+          ${it.photo_url ? `<img src="${it.photo_url}" alt="" style="width:100%; height:100%; object-fit:cover;">` : `<div class="noimg" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:34px;">${ICON.gavel}</div>`}
+          ${photoBadge}
+        </div>
+        <div style="padding:12px 14px;">
+          <div class="card-title">${it.name}</div>
+          <div class="card-meta" style="margin-top:2px;">${ICON.pin} ${owner.name || 'Un membre'}</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+            <div>
+              <div style="font-size:10.5px; color:var(--color-text-secondary);">Enchère actuelle</div>
+              <div style="font-family:'Baloo 2',sans-serif; font-weight:700; font-size:18px; color:var(--ink);">${price} €</div>
+            </div>
+            <div class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="⏳ "></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('') + `</div>`;
+}
+
+async function openAuctionDetail(itemId){
+  const it = encheresItems.find(i=>i.id===itemId) || (mineDataCache?.myItems||[]).find(i=>i.id===itemId);
+  if(!it) return;
+  auctionDetailItem = it;
+  document.getElementById('auctionOverlay').classList.remove('hidden');
+  await renderAuctionDetail();
+}
+function closeAuctionOverlay(){
+  document.getElementById('auctionOverlay').classList.add('hidden');
+  auctionDetailItem = null;
+}
+function openAuctionLightbox(){
+  if(!auctionDetailItem) return;
+  const photos = (auctionDetailItem.photo_urls && auctionDetailItem.photo_urls.length) ? auctionDetailItem.photo_urls : (auctionDetailItem.photo_url ? [auctionDetailItem.photo_url] : []);
+  openImgLightbox(photos);
+}
+
+async function renderAuctionDetail(){
+  const it = auctionDetailItem;
+  if(!it) return;
+  if(!ownerMap[it.owner_id]?.name){
+    const { data: o } = await sb.from('profiles').select('id,name,city').eq('id', it.owner_id).single();
+    if(o) ownerMap[it.owner_id] = { ...(ownerMap[it.owner_id]||{}), ...o };
+  }
+  const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
+  const photos = (it.photo_urls && it.photo_urls.length) ? it.photo_urls : (it.photo_url ? [it.photo_url] : []);
+  document.getElementById('aucImg').src = photos[0] || '';
+  const badge = document.getElementById('aucPhotoBadge');
+  badge.innerHTML = photos.length>1 ? `${ICON.camera}<span>${photos.length}</span>` : '';
+  badge.classList.toggle('hidden', photos.length<2);
+  document.getElementById('aucName').textContent = it.name;
+  document.getElementById('aucMeta').textContent = `${ownerMap[it.owner_id]?.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}`;
+  document.getElementById('aucDesc').textContent = it.description || '';
+  const price = it.current_price ?? it.starting_price;
+  document.getElementById('aucPrice').textContent = price + ' €';
+  document.getElementById('aucCountdown').innerHTML = `<div class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="⏳ "></div>`;
+
+  const isOwner = currentUser && it.owner_id === currentUser.id;
+  const leading = currentUser && it.current_bidder_id === currentUser.id;
+  const expired = isItemExpired(it);
+  document.getElementById('aucLeaderNote').innerHTML = leading ? `<div class="msg ok">✓ Tu es actuellement en tête.</div>` : expired ? `<div class="msg err">Cette enchère est terminée.</div>` : '';
+
+  const { data: bids } = await sb.from('bids').select('*').eq('item_id', it.id).order('created_at', { ascending:false }).limit(5);
+  const bidderIds = [...new Set((bids||[]).map(b=>b.bidder_id))];
+  let bidderNames = {};
+  if(bidderIds.length){
+    const { data: bidders } = await sb.from('profiles').select('id,name').in('id', bidderIds);
+    bidderNames = Object.fromEntries((bidders||[]).map(p=>[p.id,p.name]));
+  }
+  document.getElementById('aucBidHistory').innerHTML = (bids && bids.length) ? bids.map(b => `
+    <div style="display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--color-border-default);">
+      <span>${bidderNames[b.bidder_id] || 'Un membre'}${currentUser && b.bidder_id===currentUser.id ? ' (toi)' : ''}</span>
+      <span style="font-weight:700;">${b.amount} €</span>
+    </div>
+  `).join('') : `<div class="empty" style="padding:14px 0;">Sois le premier à enchérir !</div>`;
+
+  const bar = document.getElementById('aucBidBar');
+  if(isOwner || expired || !currentUser){
+    bar.style.display = 'none';
+  } else {
+    bar.style.display = '';
+    const step = it.min_increment || 1;
+    const minBid = Math.round((price + step) * 100) / 100;
+    const maxBid = Math.round((price + step * 20) * 100) / 100;
+    const slider = document.getElementById('aucBidSlider');
+    slider.min = minBid; slider.max = maxBid; slider.step = step; slider.value = minBid;
+    document.getElementById('aucTickMin').textContent = minBid + ' €';
+    document.getElementById('aucTickMax').textContent = maxBid + ' €';
+    document.getElementById('aucBidVal').textContent = minBid + ' €';
+  }
+}
+function onAucSliderInput(val){
+  document.getElementById('aucBidVal').textContent = val + ' €';
+}
+
+async function placeBid(){
+  if(!currentUser || !auctionDetailItem) return;
+  const it = auctionDetailItem;
+  if(it.owner_id === currentUser.id) return;
+  if(isItemExpired(it)){ await showAppAlert("Cette enchère est terminée."); return; }
+  const btn = document.getElementById('aucBidBtn');
+  const amount = Number(document.getElementById('aucBidSlider').value);
+  const minRequired = (it.current_price ?? it.starting_price) + (it.min_increment || 1);
+  if(!amount || amount < minRequired){ await showAppAlert(`Ta mise doit être d'au moins ${minRequired} €.`); return; }
+  btn.disabled = true;
+  const { error: e1 } = await sb.from('bids').insert({ item_id: it.id, bidder_id: currentUser.id, amount });
+  if(e1){ await showAppAlert("La mise a échoué : " + e1.message); btn.disabled = false; return; }
+  const { error: e2 } = await sb.from('items').update({ current_price: amount, current_bidder_id: currentUser.id }).eq('id', it.id);
+  if(e2){ await showAppAlert("Erreur de mise à jour : " + e2.message); btn.disabled = false; return; }
+  if(it.owner_id){
+    await sb.from('notifications').insert({
+      user_id: it.owner_id,
+      type: 'bid',
+      message: `Nouvelle enchère sur "${it.name}" : ${amount} € (mode test).`
+    });
+  }
+  auctionDetailItem = { ...it, current_price: amount, current_bidder_id: currentUser.id };
+  const idx = encheresItems.findIndex(i=>i.id===it.id);
+  if(idx>=0) encheresItems[idx] = auctionDetailItem;
+  encheresMyBidItemIds.add(it.id);
+  btn.disabled = false;
+  await renderAuctionDetail();
+  renderEncheresList();
 }
 
 // ================= MES OBJETS =================
@@ -2188,6 +2415,7 @@ const MINE_CATS = [
   { key:'objets', label:'Objets', icon: ICON.box },
   { key:'nourriture', label:'Nourriture', icon: ICON.food },
   { key:'troc', label:'Troc', icon: ICON.swap },
+  { key:'enchere', label:'Enchères', icon: ICON.gavel },
 ];
 
 function setMineTab(t){
@@ -2227,10 +2455,11 @@ async function loadMine(){
     : { data: [] };
   const resItemMap = Object.fromEntries((resItems||[]).map(i=>[i.id,i]));
 
-  // noms des interlocuteurs (pour les boutons "Discuter" côté troc)
+  // noms des interlocuteurs (pour les boutons "Discuter" côté troc, et les gagnants d'enchères)
   const peopleIds = [...new Set([
     ...(incomingRes||[]).map(r=>r.receiver_id),
-    ...(resItems||[]).map(i=>i.owner_id)
+    ...(resItems||[]).map(i=>i.owner_id),
+    ...(myItems||[]).map(i=>i.current_bidder_id)
   ])].filter(Boolean);
   const { data: people } = peopleIds.length
     ? await sb.from('profiles').select('id,name').in('id', peopleIds)
@@ -2313,6 +2542,18 @@ function renderMine(){
           </div>
           ${chatBtn}
         </div>`;
+      } else if(it.category==='enchere' && it.status === 'disponible' && isItemExpired(it)){
+        statusLabel = 'ENCHÈRE TERMINÉE'; statusClass = 'offline';
+        if(it.current_bidder_id){
+          const winnerName = (mineDataCache.peopleMap[it.current_bidder_id] || 'le gagnant').replace(/'/g,"\\'");
+          action = `<div class="val-card">${ICON.gavel} Enchère terminée : ${winnerName} a remporté l'objet pour <strong>${it.current_price} €</strong> (test, sans paiement réel).<br>
+            <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="finalizeAuction('${it.id}')">✓ Attribuer à ${winnerName}</button>
+          </div>`;
+        } else {
+          action = `<div class="val-card">${ICON.gavel} Aucune enchère reçue avant la fin du délai.<br>
+            <button class="btn btn-teal" style="margin-top:8px; width:100%;" onclick="republishItem('${it.id}')">${ICON.swap} Republier</button>
+          </div>`;
+        }
       } else if(it.status === 'disponible' && isItemExpired(it)){
         statusLabel = 'EXPIRÉ'; statusClass = 'offline';
         action = `<button class="btn btn-teal" style="width:100%;" onclick="republishItem('${it.id}')">${ICON.swap} Republier</button>`;
@@ -2340,7 +2581,7 @@ function renderMine(){
           ${thumb}
           <div class="info">
             <div class="item-name">${it.name}</div>
-            <div class="item-sub">${currentProfile?.address || 'Adresse non renseignée'}</div>
+            <div class="item-sub">${it.category==='enchere' ? `Enchère actuelle : ${it.current_price ?? it.starting_price} €` : (currentProfile?.address || 'Adresse non renseignée')}</div>
             ${catBadge(it.category)} ${countdown}
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
@@ -2396,7 +2637,7 @@ function renderMine(){
           ${thumb}
           <div class="info">
             <div class="item-name">${it.name}</div>
-            <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}${offered ? ' · Proposé : '+offered.name : ''}</div>
+            <div class="item-sub">${done ? 'Objet récupéré' : (r.donor_validated ? 'Adresse reçue' : 'En attente de validation du donneur')}${offered ? ' · Proposé : '+offered.name : ''}${it.category==='enchere' ? ' · Remporté : '+it.current_price+' €' : ''}</div>
             ${catBadge(it.category)} ${pickupCountdown}
           </div>
           <div class="status-box ${statusClass}">${statusLabel}</div>
@@ -2414,7 +2655,10 @@ async function withdrawItem(itemId){
 }
 
 async function republishItem(itemId){
-  await sb.from('items').update({ created_at: new Date().toISOString() }).eq('id', itemId);
+  const { data: it } = await sb.from('items').select('category,starting_price').eq('id', itemId).single();
+  const patch = { created_at: new Date().toISOString() };
+  if(it?.category === 'enchere'){ patch.current_price = it.starting_price; patch.current_bidder_id = null; }
+  await sb.from('items').update(patch).eq('id', itemId);
   loadMine();
 }
 
@@ -2422,6 +2666,22 @@ async function confirmPickup(itemId, category, resId, receiverId, receiverName){
   await sb.from('items').update({ status:'attribue' }).eq('id', itemId);
   loadMine();
   if(resId && receiverId) openRatingOverlay(resId, receiverId, receiverName);
+}
+
+// Attribution manuelle d'une enchère terminée au meilleur enchérisseur (mode test, sans paiement)
+async function finalizeAuction(itemId){
+  const { data: it } = await sb.from('items').select('*').eq('id', itemId).single();
+  if(!it || !it.current_bidder_id) return;
+  if(!(await showAppConfirm(`Attribuer "${it.name}" à ce prix (${it.current_price} €) ? La personne pourra alors venir chercher l'objet, comme pour un don.`))) return;
+  const { error } = await sb.from('reservations').insert({ item_id: itemId, receiver_id: it.current_bidder_id });
+  if(error){ await showAppAlert("Erreur : " + error.message); return; }
+  await sb.from('items').update({ status:'reserve' }).eq('id', itemId);
+  await sb.from('notifications').insert({
+    user_id: it.current_bidder_id,
+    type: 'won',
+    message: `Tu as remporté l'enchère "${it.name}" pour ${it.current_price} € (mode test) ! Le vendeur va t'envoyer son adresse dans Mes objets.`
+  });
+  loadMine();
 }
 
 // ================= NOTATION =================
@@ -2611,7 +2871,7 @@ async function sendTrocMessage(){
 }
 
 // ================= NOTIFICATIONS =================
-const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close, message:ICON.swap, alert:ICON.bell };
+const notifIcons = { reservation_incoming:ICON.bell, address:ICON.pin, won:ICON.award, declined:ICON.close, message:ICON.swap, alert:ICON.bell, bid:ICON.gavel };
 async function loadNotifs(){
   const el = document.getElementById('viewNotifs');
   el.innerHTML = `<div class="empty">Chargement…</div>`;
@@ -2627,7 +2887,7 @@ async function loadNotifs(){
         <div class="notif-head">
           <div class="notif-thumb">${notifIcons[n.type] || ICON.bell}</div>
           <div style="flex:1;">
-            <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : n.type==='alert' ? 'Alerte' : 'Notification'}</div>
+            <div class="notif-title">${n.type==='reservation_incoming' ? 'Réservation reçue' : n.type==='address' ? 'Adresse reçue' : n.type==='declined' ? 'Réservation refusée' : n.type==='message' ? 'Nouveau message' : n.type==='alert' ? 'Alerte' : n.type==='bid' ? 'Nouvelle enchère' : n.type==='won' ? 'Enchère remportée' : 'Notification'}</div>
             <div class="notif-time">${new Date(n.created_at).toLocaleString('fr-FR')}</div>
           </div>
           <button class="x-btn" style="width:26px; height:26px; font-size:12px;" onclick="dismissNotif('${n.id}')">${ICON.close}</button>
