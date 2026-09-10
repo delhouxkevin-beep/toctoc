@@ -434,8 +434,20 @@
     <!-- Enchères -->
     <div id="viewEncheres" class="hidden" style="padding:0 18px;">
       <div class="val-card" style="margin:14px 0 10px;"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> <strong>Mode test</strong> — enchérir ici ne débite aucun argent réel. On branchera les vrais paiements plus tard.</div>
-      <button class="publish-btn" style="margin:0 0 14px;" onclick="openPublishAuction()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier une enchère</button>
+      <div style="display:flex; gap:8px; margin:0 0 14px;">
+        <button class="publish-btn" style="flex:1; margin:0;" onclick="openPublishAuction()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H7l1-1.6h4L13 6h2.5A1.5 1.5 0 0 1 17 7.5v7A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5v-7z"/><circle cx="10" cy="10.5" r="3"/></svg> Publier</button>
+        <button class="radius-pill" id="encheresModeBtn" style="flex-shrink:0;" onclick="toggleEncheresMode()"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Swipe</button>
+      </div>
       <div id="encheresList"><div class="empty">Chargement…</div></div>
+      <div id="encheresStackWrap" class="hidden">
+        <div class="stack" id="encheresStack" style="margin:0 0 14px;"></div>
+        <div class="swbar" style="margin:0 0 12px;">
+          <div class="swbar-actions">
+            <button class="btn-pass2" onclick="passEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+            <button class="btn-reserve" onclick="bidEncheresTop()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 16.5h6"/><path d="M13 3l3.5 3.5-2.2 2.2-3.5-3.5z"/><path d="M10.8 5.2l3.5 3.5-6 6-3.5-3.5z"/></svg> Enchérir</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Profil -->
@@ -477,12 +489,12 @@
   </div>
 
   <!-- Détail d'une enchère + barre de mise -->
-  <div class="overlay hidden" id="auctionOverlay" style="z-index:400;">
-    <div class="sheet" style="padding:0; max-height:92vh; display:flex; flex-direction:column;">
+  <div class="overlay hidden" id="auctionOverlay" style="z-index:400;" onclick="closeAuctionOverlay()">
+    <div class="sheet" style="padding:0; max-height:92vh; display:flex; flex-direction:column;" onclick="event.stopPropagation()">
       <div style="position:relative; flex-shrink:0;">
         <img id="aucImg" src="" alt="" style="width:100%; height:210px; object-fit:cover; border-radius:18px 24px 0 0; cursor:zoom-in; display:block;" onclick="openAuctionLightbox()">
-        <button class="x-btn" style="position:absolute; top:12px; right:12px;" onclick="closeAuctionOverlay()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
-        <div id="aucPhotoBadge" class="thumb-photo-badge hidden" style="top:12px; left:12px; font-size:11px; padding:4px 8px;"></div>
+        <button style="position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%; background:rgba(20,14,36,0.55); color:#fff; border:1.5px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="closeAuctionOverlay()"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+        <div id="aucPhotoBadge" class="thumb-photo-badge hidden" style="top:12px; left:12px; right:auto; font-size:11px; padding:4px 8px;"></div>
       </div>
       <div style="padding:16px 18px; overflow-y:auto; flex:1;">
         <div class="card-title" id="aucName" style="font-size:18px;"></div>
@@ -1365,10 +1377,10 @@ function switchView(v){
     document.getElementById('nav'+x[0].toUpperCase()+x.slice(1))?.classList.toggle('active', x===v);
   });
   document.getElementById('segmentedBar').classList.toggle('hidden', v!=='discover');
-  document.getElementById('statusRow').classList.toggle('hidden', v!=='discover');
+  document.getElementById('statusRow').classList.toggle('hidden', v!=='discover' && v!=='encheres');
   document.getElementById('searchRow').classList.toggle('hidden', v!=='discover');
   document.getElementById('subcatRow').classList.toggle('hidden', v!=='discover');
-  if(v!=='discover') document.getElementById('radiusPanel').classList.add('hidden');
+  if(v!=='discover' && v!=='encheres') document.getElementById('radiusPanel').classList.add('hidden');
   if(v==='mine') loadMine();
   if(v==='encheres') loadEncheres();
   if(v==='profile') renderProfile();
@@ -1553,7 +1565,7 @@ function setRadiusKm(km){
   radiusKm = km;
   document.getElementById('radiusPillLabel').textContent = km==='all' ? 'Tous' : km+' km';
   document.getElementById('radiusPanel').classList.add('hidden');
-  loadFeed();
+  if(currentView==='encheres') loadEncheres(); else loadFeed();
 }
 
 
@@ -2231,6 +2243,18 @@ async function submitPublish(){
 let encheresItems = [];
 let encheresMyBidItemIds = new Set();
 let auctionDetailItem = null;
+let encheresMode = 'list'; // 'list' | 'swipe'
+let encheresStackIndex = 0;
+
+function toggleEncheresMode(){
+  encheresMode = encheresMode === 'list' ? 'swipe' : 'list';
+  document.getElementById('encheresList').classList.toggle('hidden', encheresMode!=='list');
+  document.getElementById('encheresStackWrap').classList.toggle('hidden', encheresMode!=='swipe');
+  document.getElementById('encheresModeBtn').innerHTML = encheresMode==='list'
+    ? `<svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 6.5h11.5M15.5 6.5L12 3M15.5 6.5L12 10"/><path d="M16 13.5H4.5M4.5 13.5L8 10M4.5 13.5L8 17"/></svg> Swipe`
+    : `${ICON.box} Liste`;
+  if(encheresMode==='swipe'){ encheresStackIndex = 0; renderEncheresStack(); }
+}
 
 async function loadEncheres(){
   const el = document.getElementById('encheresList');
@@ -2250,6 +2274,7 @@ async function loadEncheres(){
     });
   }
   encheresItems = all;
+  document.getElementById('itemCount').textContent = encheresItems.length + " enchère(s)";
 
   const ownerIds = [...new Set(all.map(i=>i.owner_id))];
   const { data: owners } = ownerIds.length ? await sb.from('profiles').select('id,name,city').in('id', ownerIds) : { data: [] };
@@ -2262,7 +2287,9 @@ async function loadEncheres(){
     const { data: myBids } = await sb.from('bids').select('item_id').eq('bidder_id', currentUser.id).in('item_id', itemIds);
     encheresMyBidItemIds = new Set((myBids||[]).map(b=>b.item_id));
   }
+  encheresStackIndex = 0;
   renderEncheresList();
+  renderEncheresStack();
 }
 
 function renderEncheresList(){
@@ -2278,6 +2305,7 @@ function renderEncheresList(){
     const tag = leading ? `<div class="best-match-tag" style="background:var(--teal);">Tu es en tête</div>` : outbid ? `<div class="best-match-tag" style="background:var(--coral);">Dépassé</div>` : '';
     const photoBadge = (it.photo_urls && it.photo_urls.length>1) ? `<div class="thumb-photo-badge" style="top:8px; right:8px;">${ICON.camera}<span>${it.photo_urls.length}</span></div>` : '';
     const owner = ownerMap[it.owner_id] || {};
+    const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
     return `
       <div class="card ${leading?'best-match':''}" style="cursor:pointer;" onclick="openAuctionDetail('${it.id}')">
         ${tag}
@@ -2287,7 +2315,7 @@ function renderEncheresList(){
         </div>
         <div style="padding:12px 14px;">
           <div class="card-title">${it.name}</div>
-          <div class="card-meta" style="margin-top:2px;">${ICON.pin} ${owner.name || 'Un membre'}</div>
+          <div class="card-meta" style="margin-top:2px;">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
           <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
             <div>
               <div style="font-size:10.5px; color:var(--color-text-secondary);">Enchère actuelle</div>
@@ -2299,6 +2327,118 @@ function renderEncheresList(){
       </div>
     `;
   }).join('') + `</div>`;
+}
+
+// ---- Mode swipe pour les enchères ----
+function renderEncheresStack(){
+  const stack = document.getElementById('encheresStack');
+  if(!stack) return;
+  stack.innerHTML = '';
+  if(encheresItems.length === 0){
+    stack.innerHTML = `<div class="empty">Aucune enchère en cours près de toi pour l'instant.</div>`;
+    return;
+  }
+  [2,1,0].forEach(offset=>{
+    const i = encheresStackIndex + offset;
+    const el = document.createElement('div');
+
+    if(i >= encheresItems.length){
+      if(offset !== 0) return;
+      el.className = 'swcard end-card front';
+      el.innerHTML = `
+        <div class="end-card-inner">
+          <div class="end-card-icon">${ICON.gavel}</div>
+          <div class="end-card-title">Tu as tout vu !</div>
+          <p class="end-card-text">Publie une enchère pour que d'autres en profitent, ou repars depuis le début.</p>
+          <button class="btn btn-teal" style="width:100%;" onclick="openPublishAuction()">${ICON.camera} Publier une enchère</button>
+          <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="restartEncheresStack()">${ICON.swap} Revenir au début</button>
+        </div>
+      `;
+      stack.appendChild(el);
+      return;
+    }
+
+    const it = encheresItems[i];
+    const owner = ownerMap[it.owner_id] || {};
+    const dist = userPos ? haversine(userPos.lat, userPos.lng, it.lat, it.lng) : null;
+    const price = it.current_price ?? it.starting_price;
+    const leading = currentUser && it.current_bidder_id === currentUser.id;
+    el.className = 'swcard ' + (offset===0 ? 'front' : offset===1 ? 'behind' : 'behind2');
+    el.innerHTML = `
+      <div class="swart">
+        ${it.photo_url ? `<img src="${it.photo_url}" alt="" onclick="event.stopPropagation(); openAuctionDetail('${it.id}')" style="cursor:zoom-in;">` : `<div class="noimg">${ICON.gavel}</div>`}
+        <div class="sw-loc">${ICON.pin} ${owner.name || 'Un membre'} · ${fmtKm(dist)}${fmtItemLoc(it) ? ' · '+fmtItemLoc(it) : ''}</div>
+        <div class="sw-free">${price} €${leading ? ' · en tête' : ''}</div>
+        ${it.photo_urls && it.photo_urls.length>1 ? `<button class="photo-count-badge" onclick="event.stopPropagation(); openAuctionDetail('${it.id}');">${ICON.camera}<span>${it.photo_urls.length}</span></button>` : ''}
+        <div class="countdown-pill"><span class="countdown-badge" data-expires="${new Date(itemExpiryMs(it)).toISOString()}" data-prefix="Encore "></span></div>
+        <div class="sw-hint like">ENCHÉRIR</div>
+        <div class="sw-hint pass">JE PASSE</div>
+      </div>
+      <div class="swinfo">
+        <div class="card-title">${it.name}</div>
+        <div class="card-meta">Enchère actuelle : ${price} €</div>
+        <div class="card-desc">${it.description||''}</div>
+      </div>
+    `;
+    if(offset===0) addEncheresDrag(el);
+    stack.appendChild(el);
+  });
+}
+
+function restartEncheresStack(){ encheresStackIndex = 0; renderEncheresStack(); }
+
+function addEncheresDrag(card){
+  let startX=0, dx=0, dragging=false;
+  const likeHint = card.querySelector('.sw-hint.like');
+  const passHint = card.querySelector('.sw-hint.pass');
+  function onMove(x){
+    if(!dragging) return;
+    dx = x-startX;
+    card.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+    likeHint.style.opacity = Math.max(0, dx/60);
+    passHint.style.opacity = Math.max(0, -dx/60);
+  }
+  function onMouseMove(e){ onMove(e.clientX); }
+  function onUp(){
+    if(!dragging) return;
+    dragging=false;
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onUp);
+    card.style.transition='transform .35s cubic-bezier(.2,.8,.3,1), opacity .35s';
+    if(dx > 90) handleBidIntent(card);
+    else if(dx < -90) swipeEncheresAway(card, -1);
+    else { card.style.transform=''; likeHint.style.opacity=0; passHint.style.opacity=0; }
+  }
+  function onMouseDown(e){
+    dragging=true; startX=e.clientX; dx=0; card.style.transition='none';
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onUp);
+  }
+  card.addEventListener('mousedown', onMouseDown);
+  card.addEventListener('touchstart', e=>{ dragging=true; startX=e.touches[0].clientX; dx=0; card.style.transition='none'; }, {passive:true});
+  card.addEventListener('touchmove', e=>onMove(e.touches[0].clientX), {passive:true});
+  card.addEventListener('touchend', onUp);
+}
+
+function swipeEncheresAway(card, dir){
+  card.style.transform = `translateX(${dir*500}px) rotate(${dir*30}deg)`;
+  card.style.opacity = '0';
+  setTimeout(()=>{ encheresStackIndex++; renderEncheresStack(); }, 300);
+}
+
+function handleBidIntent(card){
+  const it = encheresItems[encheresStackIndex];
+  if(card) resetCardPosition(card);
+  if(it) openAuctionDetail(it.id);
+}
+
+function passEncheresTop(){
+  const card = document.querySelector('#encheresStack .swcard.front');
+  if(card && !card.classList.contains('end-card')) swipeEncheresAway(card, -1);
+}
+function bidEncheresTop(){
+  const it = encheresItems[encheresStackIndex];
+  if(it) openAuctionDetail(it.id);
 }
 
 async function openAuctionDetail(itemId){
@@ -2404,6 +2544,7 @@ async function placeBid(){
   btn.disabled = false;
   await renderAuctionDetail();
   renderEncheresList();
+  renderEncheresStack();
 }
 
 // ================= MES OBJETS =================
